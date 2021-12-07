@@ -33829,7 +33829,9 @@ var rudderanalytics = (function (exports) {
                 h.end = null;
               }, c);
               h.timeout = c;
-            })(window, document.documentElement, "async-hide", "dataLayer", 4000, flickerObj);
+            })(window, document.documentElement, "async-hide", "dataLayer", 4000, {
+              'OPT-WPGK9F9': true
+            });
           }
   
           if (this.ga) {
