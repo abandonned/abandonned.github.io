@@ -33837,9 +33837,8 @@ var rudderanalytics = (function (exports) {
           var js = document.createElement("script");
           js.innerHTML = "(function(a,s,y,n,c,h,i,d,e){s.className+=' '+y;h.start=1*new Date;h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};(a[n]=a[n]||[]).hide=h;setTimeout(function(){i();h.end=null},c);h.timeout=c;})(window,document.documentElement,'async-hide','dataLayer',4000,{'".concat(this.containerId, "':true});");
           var e = document.getElementsByTagName("script")[0];
+          e.parentNode.insertBefore(flick, e);
           e.parentNode.insertBefore(js, e);
-          var f = document.getElementsByTagName("script")[1];
-          f.parentNode.insertBefore(flick, f);
         }
       }
     }, {
