@@ -33830,7 +33830,7 @@ var rudderanalytics = (function (exports) {
   
           if (this.aflicker) {
             var flickerObj = {};
-            flickerObj[this.containerId] = true;
+            flickerObj["".concat(this.containerId)] = true;
   
             (function (a, s, y, n, c, h, i, d, e) {
               s.className += " " + y;
