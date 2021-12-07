@@ -33812,24 +33812,21 @@ var rudderanalytics = (function (exports) {
           }
   
           if (this.ga) {
-            var gtag = function gtag() {
-              dataLayer.push(arguments);
-            };
-  
             if (!this.trackingId) {
               return;
             }
   
             ScriptLoader("Google Tag Manager", "https://www.googletagmanager.com/gtag/js?id=".concat(this.trackingId));
             window.dataLayer = window.dataLayer || [];
-            gtag("js", new Date());
-            gtag("config", "".concat(this.trackingId));
+            window.dataLayer.push("js", new Date());
+            window.dataLayer.push("config", "".concat(this.trackingId));
           }
   
           ScriptLoader("Google Optimize", "https://www.googleoptimize.com/optimize.js?id=".concat(this.containerId), this.async);
   
           if (this.aflicker) {
-            var test = this.containerId;
+            var flickerObj = {};
+            flickerObj[this.containerId] = true;
   
             (function (a, s, y, n, c, h, i, d, e) {
               s.className += " " + y;
@@ -33845,9 +33842,7 @@ var rudderanalytics = (function (exports) {
                 h.end = null;
               }, c);
               h.timeout = c;
-            })(window, document.documentElement, "async-hide", "dataLayer", 4000, {
-              test: true
-            });
+            })(window, document.documentElement, "async-hide", "dataLayer", 4000, flickerObj);
           }
         }
       }, {
