@@ -1,51 +1,10 @@
     <!DOCTYPE html>
     <html lang="en">
-    <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-         <script>
-            rudderanalytics = window.rudderanalytics = [];
-    
-            var methods = [
-            "load",
-            "page",
-            "track",
-            "identify",
-            "alias",
-            "group",
-            "ready",
-            "reset",
-            "getAnonymousId",
-            "setAnonymousId",
-            ];
-    
-            for (var i = 0; i < methods.length; i++) {
-            var method = methods[i];
-            rudderanalytics[method] = (function (methodName) {
-                return function () {
-                rudderanalytics.push(
-                    [methodName].concat(Array.prototype.slice.call(arguments))
-                );
-                };
-            })(method);
-            }
-            rudderanalytics.load(
-            "1uOCf3OmP7FhFlS6l0ZYYpQfk08",
-            "https://hosted-dev-dataplane.dev-rudder.rudderlabs.com",{loglevel: "DEBUG", configUrl: "https://api.dev.rudderlabs.com"}
-            );
-            // rudderanalytics.identify("ankitcingh93@gmail.com", {
-            //     "first_name": "James",
-            //     "last_name": "Doe",
-            //     "phone": "+91237416221"
-            // });
-            //For example,
-            //rudderanalytics.load("1Qb1F3jSWv0eKFBPZcrM7ypgjVo", "http://localhost:8080");
-        </script>
-       <!-- <script src ="./browser.js"> </script> -->
-            </head>
-         <script src="https://cdn.rudderlabs.com/v1/rudder-analytics.min.js"></script> 
-        <!-- Global site tag (gtag.js) - Google Analytics -->
- <script async src="https://www.googletagmanager.com/gtag/js?id=UA-199648645-1"></script>
+        
+         <script src="https://www.googleoptimize.com/optimize.js?id=OPT-WPGK9F9"></script>
+         <script async src="https://www.googletagmanager.com/gtag/js?id=UA-199648645-1"></script>
         <script>
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
@@ -58,7 +17,6 @@
 h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};
 (a[n]=a[n]||[]).hide=h;setTimeout(function(){i();h.end=null},c);h.timeout=c;
 })(window,document.documentElement,'async-hide','dataLayer',4000,
-{'OPT-WPGK9F9' :true});</script>
-
-        <script src="https://www.googleoptimize.com/optimize.js?id=OPT-WPGK9F9"></script>
+{'OPT-WPGK9F9' :true});
+        </script>
     </html>
