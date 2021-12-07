@@ -33832,22 +33832,10 @@ var rudderanalytics = (function (exports) {
         if (this.aflicker) {
           var flickerObj = {};
           flickerObj["".concat(this.containerId)] = true;
-
-          (function (a, s, y, n, c, h, i, d, e) {
-            s.className += " " + y;
-            h.start = 1 * new Date();
-
-            h.end = i = function i() {
-              s.className = s.className.replace(RegExp(" ?" + y), "");
-            };
-
-            (a[n] = a[n] || []).hide = h;
-            setTimeout(function () {
-              i();
-              h.end = null;
-            }, c);
-            h.timeout = c;
-          })(window, document.documentElement, "async-hide", "dataLayer", 4000, flickerObj);
+          var js = document.createElement("script");
+          js.innerHTML = "(function(a,s,y,n,c,h,i,d,e){s.className+=' '+y;h.start=1*new Date;h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};(a[n]=a[n]||[]).hide=h;setTimeout(function(){i();h.end=null},c);h.timeout=c;})(window,document.documentElement,'async-hide','dataLayer',4000,{'".concat(this.containerId, "':true});");
+          var e = document.getElementsByTagName("script")[0];
+          e.parentNode.insertBefore(js, e);
         }
       }
     }, {
