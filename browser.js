@@ -33812,14 +33812,18 @@ var rudderanalytics = (function (exports) {
           }
   
           if (this.ga) {
+            var gtag = function gtag() {
+              dataLayer.push(arguments);
+            };
+  
             if (!this.trackingId) {
               return;
             }
   
             ScriptLoader("Google Tag Manager", "https://www.googletagmanager.com/gtag/js?id=".concat(this.trackingId));
             window.dataLayer = window.dataLayer || [];
-            window.dataLayer.push("js", new Date());
-            window.dataLayer.push("config", "".concat(this.trackingId));
+            gtag("js", new Date());
+            gtag("config", "UA-199648645-1");
           }
   
           ScriptLoader("Google Optimize", "https://www.googleoptimize.com/optimize.js?id=".concat(this.containerId), this.async);
