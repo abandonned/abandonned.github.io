@@ -33809,6 +33809,24 @@ var rudderanalytics = (function (exports) {
 
         if (!this.containerId) {
           return;
+        } // load optimize script first
+
+
+        ScriptLoader("Google Optimize", "https://www.googleoptimize.com/optimize.js?id=".concat(this.containerId), this.async);
+
+        if (this.ga) {
+          var gtag = function gtag() {
+            dataLayer.push(arguments);
+          };
+
+          if (!this.trackingId) {
+            return;
+          }
+
+          ScriptLoader("Google Tag Manager", "https://www.googletagmanager.com/gtag/js?id=".concat(this.trackingId));
+          window.dataLayer = window.dataLayer || [];
+          gtag("js", new Date());
+          gtag("config", "UA-199648645-1");
         }
 
         if (this.aflicker) {
@@ -33829,27 +33847,8 @@ var rudderanalytics = (function (exports) {
               h.end = null;
             }, c);
             h.timeout = c;
-          })(window, document.documentElement, "async-hide", "dataLayer", 4000, {
-            'OPT-WPGK9F9': true
-          });
+          })(window, document.documentElement, "async-hide", "dataLayer", 4000, flickerObj);
         }
-
-        if (this.ga) {
-          var gtag = function gtag() {
-            dataLayer.push(arguments);
-          };
-
-          if (!this.trackingId) {
-            return;
-          }
-
-          ScriptLoader("Google Tag Manager", "https://www.googletagmanager.com/gtag/js?id=".concat(this.trackingId));
-          window.dataLayer = window.dataLayer || [];
-          gtag("js", new Date());
-          gtag("config", "UA-199648645-1");
-        }
-
-        ScriptLoader("Google Optimize", "https://www.googleoptimize.com/optimize.js?id=".concat(this.containerId), this.async);
       }
     }, {
       key: "isLoaded",
