@@ -33826,7 +33826,7 @@ var rudderanalytics = (function (exports) {
           ScriptLoader("Google Tag Manager", "https://www.googletagmanager.com/gtag/js?id=".concat(this.trackingId));
           window.dataLayer = window.dataLayer || [];
           gtag("js", new Date());
-          gtag("config", "UA-199648645-1");
+          gtag("config", "".concat(this.trackingId));
         }
 
         if (this.aflicker) {
