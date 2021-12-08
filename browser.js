@@ -5470,7 +5470,13 @@ var rudderanalytics = (function (exports) {
     GOOGLE_OPTIMIZE: "GOOGLE_OPTIMIZE",
     GoogleOptimize: "GOOGLE_OPTIMIZE",
     Googleoptimize: "GOOGLE_OPTIMIZE",
-    GOOGLEOPTIMIZE: "GOOGLE_OPTIMIZE"
+    GOOGLEOPTIMIZE: "GOOGLE_OPTIMIZE",
+    PostAffiliatePro: "POST_AFFILIATE_PRO",
+    Post_affiliate_pro: "POST_AFFILIATE_PRO",
+    "Post Affiliate Pro": "POST_AFFILIATE_PRO",
+    postaffiliatepro: "POST_AFFILIATE_PRO",
+    POSTAFFILIATEPRO: "POST_AFFILIATE_PRO",
+    POST_AFFILIATE_PRO: "POST_AFFILIATE_PRO"
   };
 
   // from client native integration name to server identified display name
@@ -5516,7 +5522,8 @@ var rudderanalytics = (function (exports) {
     MP: "Mixpanel",
     QUALTRICS: "Qualtrics",
     SENTRY: "Sentry",
-    GOOGLE_OPTIMIZE: "GoogleOptimize"
+    GOOGLE_OPTIMIZE: "GoogleOptimize",
+    POST_AFFILIATE_PRO: "PostAffiliatePro"
   };
 
   // Reserved Keywords for properties/triats
@@ -22868,7 +22875,8 @@ var rudderanalytics = (function (exports) {
     logger.debug("in script loader=== ".concat(id));
     var js = document.createElement("script");
     js.src = src;
-    js.async = async || true;
+    async = async === undefined ? true : async;
+    js.async = async;
     js.type = "text/javascript";
     js.id = id;
     var e = document.getElementsByTagName("script")[0];
@@ -33827,17 +33835,18 @@ var rudderanalytics = (function (exports) {
           window.dataLayer = window.dataLayer || [];
           gtag("js", new Date());
           gtag("config", "".concat(this.trackingId));
-        }
+        } // anti flicker snippet contains insertBefore since it needs to be executed before any other script
+        // link -> https://support.google.com/optimize/answer/7100284?hl=en&ref_topic=6197443
+
 
         if (this.aflicker) {
-          var flickerObj = {};
-          flickerObj["".concat(this.containerId)] = true;
           var flick = document.createElement("style");
           flick.innerHTML = ".async-hide { opacity: 0 !important}";
           var js = document.createElement("script");
           js.innerHTML = "(function(a,s,y,n,c,h,i,d,e){s.className+=' '+y;h.start=1*new Date;h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};(a[n]=a[n]||[]).hide=h;setTimeout(function(){i();h.end=null},c);h.timeout=c;})(window,document.documentElement,'async-hide','dataLayer',4000,{'".concat(this.containerId, "':true});");
           var e = document.getElementsByTagName("script")[0];
-          e.parentNode.insertBefore(flick, e);
+          e.parentNode.insertBefore(flick, e); // style tag in anti flicker snippet should be before the a-flicker script as per docs
+
           e.parentNode.insertBefore(js, e);
         }
       }
@@ -33856,6 +33865,156 @@ var rudderanalytics = (function (exports) {
     }]);
 
     return GoogleOptimize;
+  }();
+
+  // This function helps to populate the sale object
+  var updateSaleObject = function updateSaleObject(sale, properties) {
+    if (properties.total) sale.setTotalCost(properties.total);
+    if (properties.fixedCost) sale.setFixedCost(properties.fixedCost);
+    if (properties.order_id) sale.setOrderID(properties.order_id); // Post Affiliate Pro supports five extra data only.
+
+    if (properties.data1) sale.setData1(properties.data1);
+    if (properties.data2) sale.setData2(properties.data2);
+    if (properties.data3) sale.setData3(properties.data3);
+    if (properties.data4) sale.setData4(properties.data4);
+    if (properties.data5) sale.setData5(properties.data5);
+    if (properties.doNotDeleteCookies && properties.doNotDeleteCookies === true) sale.doNotDeleteCookies();
+    if (properties.status) sale.setStatus(properties.status);
+    if (properties.currency) sale.setCurrency(properties.currency);
+    if (properties.customCommision) sale.setCustomCommission(properties.customCommision);
+    if (properties.channel) sale.setChannelID(properties.channel);
+    if (properties.coupon) sale.setCoupon(properties.coupon);
+    if (properties.campaignId) sale.setCampaignID(properties.campaignId);
+    if (properties.affiliateId) sale.setAffiliateID(properties.affiliateId);
+  };
+
+  var PostAffiliatePro = /*#__PURE__*/function () {
+    function PostAffiliatePro(config) {
+      _classCallCheck(this, PostAffiliatePro);
+
+      this.name = "POST_AFFILIATE_PRO";
+      this.url = config.url;
+      this.mergeProducts = config.mergeProducts;
+      this.accountId = config.accountId;
+      this.affLinkId = config.affLinkId;
+      this.idName = config.idName;
+      this.cookieLinkId = config.cookieLinkId;
+      this.cookieName = config.cookieName;
+      this.affiliateToCustomField = config.affiliateToCustomField;
+      this.campaignToCustomField = config.campaignToCustomField;
+      this.cookieDomain = config.cookieDomain;
+      this.cookieToCustomField = config.cookieToCustomField;
+      this.disableTrackingMethod = config.disableTrackingMethod;
+      this.paramNameUserId = config.paramNameUserId;
+      this.clickEvents = config.clickEvents;
+    }
+
+    _createClass(PostAffiliatePro, [{
+      key: "init",
+      value: function init() {
+        logger.debug("===in init Post Affiliate Pro===");
+
+        if (!this.url) {
+          logger.debug("URL is missing");
+          return;
+        }
+
+        ScriptLoader("pap_x2s6df8d", this.url);
+      }
+    }, {
+      key: "isLoaded",
+      value: function isLoaded() {
+        logger.debug("===In isLoaded Post Affiliate Pro===");
+        return !!window.PostAffTracker;
+      }
+    }, {
+      key: "isReady",
+      value: function isReady() {
+        logger.debug("===In isReady Post Affiliate Pro===");
+
+        if (window.PostAffTracker) {
+          if (!this.disableTrackingMethod) window.PostAffTracker.disableTrackingMethod("F");
+          if (this.paramNameUserId) window.PostAffTracker.setParamNameUserId(this.paramNameUserId);
+          if (this.accountId) window.PostAffTracker.setAccountId(this.accountId);
+          if (this.cookieDomain) window.PostAffTracker.setCookieDomain(this.cookieDomain);
+          if (this.cookieToCustomField) window.PostAffTracker.writeCookieToCustomField(this.cookieToCustomField);
+          if (this.affiliateToCustomField) window.PostAffTracker.writeAffiliateToCustomField(this.affiliateToCustomField);
+          if (this.campaignToCustomField) window.PostAffTracker.writeCampaignToCustomField(this.campaignToCustomField);
+          if (this.affLinkId && this.idName) window.PostAffTracker.writeAffiliateToLink(this.affLinkId, this.idName);
+          if (this.cookieName && this.cookieLinkId) window.PostAffTracker.writeCookieToLink(this.cookieLinkId, this.cookieName);
+          return true;
+        }
+
+        return false;
+      }
+    }, {
+      key: "identify",
+      value: function identify(rudderElement) {
+        logger.debug("===In Post Affiliate Pro identify===");
+        var message = rudderElement.message;
+        var visitorId = getValue(message, "userId");
+        window.PostAffTracker.setVisitorId(visitorId);
+      } // eslint-disable-next-line lines-between-class-members
+
+    }, {
+      key: "track",
+      value: function track(rudderElement) {
+        logger.debug("===In Post Affiliate Pro track===");
+        var clickEventsArr = this.clickEvents ? this.clickEvents.split(",") : null;
+        var message = rudderElement.message;
+        var event = message.event;
+        var properties = message.properties; // We are going to call click event, for the event list given in dashboard only.
+
+        if (clickEventsArr && clickEventsArr.includes(event)) {
+          if (properties) {
+            if (properties.data1) window.Data1 = properties.data1;
+            if (properties.data2) window.Data2 = properties.data2;
+            if (properties.affiliateId) window.AffiliateID = properties.affiliateId;
+            if (properties.bannerId) window.BannerID = properties.bannerId;
+            if (properties.campaignId) window.CampaignID = properties.campaignId;
+            if (properties.channel) window.Channel = properties.channel;
+          }
+
+          window.PostAffTracker.track();
+        } // We are supporting only one event for sale.
+
+
+        if (event === "Order Completed") {
+          var productsArr = properties && properties.products ? properties.products : null;
+
+          if (productsArr) {
+            if (this.mergeProducts) {
+              window.sale = window.PostAffTracker.createSale();
+              if (window.sale) updateSaleObject(window.sale, properties);
+              var mergedProductId = [];
+
+              for (var i = 0; i < productsArr.length; i += 1) {
+                if (productsArr[i].product_id) mergedProductId.push(productsArr[i].product_id);
+              }
+
+              var merged = mergedProductId.join();
+              if (merged) window.sale.setProductID(merged);
+            } else {
+              for (var _i = 0; _i < productsArr.length; _i += 1) {
+                window["sale".concat(_i)] = window.PostAffTracker.createSale();
+                updateSaleObject(window["sale".concat(_i)], properties);
+                if (productsArr[_i].product_id) window["sale".concat(_i)].setProductID(productsArr[_i].product_id);
+              }
+            }
+          } else {
+            // If any product is not available.
+            window.sale = window.PostAffTracker.createSale();
+          }
+
+          window.PostAffTracker.register();
+        }
+      } // reset() {
+      //   window.PostAffTracker.setVisitorId(null);
+      // }
+
+    }]);
+
+    return PostAffiliatePro;
   }();
 
   // (config-plan name, native destination.name , exported integration name(this one below))
@@ -33903,7 +34062,8 @@ var rudderanalytics = (function (exports) {
     SNAP_PIXEL: SnapPixel,
     TVSQUARED: TVSquared,
     VWO: VWO,
-    GOOGLE_OPTIMIZE: GoogleOptimize
+    GOOGLE_OPTIMIZE: GoogleOptimize,
+    POST_AFFILIATE_PRO: PostAffiliatePro
   };
 
   // Application class
