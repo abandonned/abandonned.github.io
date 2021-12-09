@@ -74,22 +74,32 @@ h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};
     };
     _learnq.push(["identify", item]);
     </script>
-    <!-- Viewed product
+    <!-- Viewed product -->
     <script type="text/javascript">
-        var _learnq = _learnq || [];
-        var hey = {
-        };
-        _learnq.push(["track", "Viewed Product", hey]);
-     </script> -->
+      var _learnq = _learnq || [];
+      var item = {
+        "ProductName": "Winnie the Pooh",
+        "ProductID": "1111",
+        "SKU": "WINNIEPOOH",
+        "Categories": ["Fiction", "Children"],
+        "ImageURL": "http://www.example.com/path/to/product/image.png",
+        "URL": "http://www.example.com/path/to/product",
+        "Brand": "Kids Books",
+        "Price": 9.99,
+        "CompareAtPrice": 14.99,
+        "Currency": "USD"
+      };
+      _learnq.push(["track", "Viewed Product", item]);
+   </script>
      <!-- Added to cart
      <script type="text/javascript">
         _learnq.push(['track', "Added to Cart", {
         }]);
       </script> -->
 
-      <script type="text/javascript">
+      <!-- <script type="text/javascript">
         _learnq.push(['track', 'Started Checkout', {
         }]);
-      </script>
+      </script> -->
 
     </html>
