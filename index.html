@@ -81,9 +81,43 @@ h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};
         };
         _learnq.push(["track", "Viewed Product", hey]);
      </script> -->
-
+     <!-- Added to cart
      <script type="text/javascript">
         _learnq.push(['track', "Added to Cart", {
         }]);
+      </script> -->
+
+      <script type="text/javascript">
+        _learnq.push(['track', 'Started Checkout', {
+          "$event_id": "1000123_1387299423",
+          "$value": 29.98,
+          "ItemNames": ["Winnie the Pooh", "A Tale of Two Cities"],
+          "CheckoutURL": "http://www.example.com/path/to/checkout",
+          "Categories": ["Fiction", "Children", "Classics"],
+          "Items": [{
+              "ProductID": "1111",
+              "SKU": "WINNIEPOOH",
+              "ProductName": "Winnie the Pooh",
+              "Quantity": 1,
+              "ItemPrice": 9.99,
+              "RowTotal": 9.99,
+              "ProductURL": "http://www.example.com/path/to/product",
+              "ImageURL": "http://www.example.com/path/to/product/image.png",
+              "ProductCategories": ["Fiction", "Children"]
+            },
+            {
+              "ProductID": "1112",
+              "SKU": "TALEOFTWO",
+              "ProductName": "A Tale of Two Cities",
+              "Quantity": 1,
+              "ItemPrice": 19.99,
+              "RowTotal": 19.99,
+              "ProductURL": "http://www.example.com/path/to/product2",
+              "ImageURL": "http://www.example.com/path/to/product/image2.png",
+              "ProductCategories": ["Fiction", "Classics"]
+            }
+          ]
+        }]);
       </script>
+
     </html>
