@@ -5466,11 +5466,6 @@ var rudderanalytics = (function (exports) {
     quantumMetric: "QUANTUMMETRIC",
     quantummetric: "QUANTUMMETRIC",
     Quantum_Metric: "QUANTUMMETRIC",
-    "Google Optimize": "GOOGLE_OPTIMIZE",
-    GOOGLE_OPTIMIZE: "GOOGLE_OPTIMIZE",
-    GoogleOptimize: "GOOGLE_OPTIMIZE",
-    Googleoptimize: "GOOGLE_OPTIMIZE",
-    GOOGLEOPTIMIZE: "GOOGLE_OPTIMIZE",
     PostAffiliatePro: "POST_AFFILIATE_PRO",
     Post_affiliate_pro: "POST_AFFILIATE_PRO",
     "Post Affiliate Pro": "POST_AFFILIATE_PRO",
@@ -5522,7 +5517,6 @@ var rudderanalytics = (function (exports) {
     MP: "Mixpanel",
     QUALTRICS: "Qualtrics",
     SENTRY: "Sentry",
-    GOOGLE_OPTIMIZE: "GoogleOptimize",
     POST_AFFILIATE_PRO: "PostAffiliatePro"
   };
 
@@ -5567,7 +5561,7 @@ var rudderanalytics = (function (exports) {
     PRODUCT_REVIEWED: "Product Reviewed"
   }; // Enumeration for integrations supported
 
-  var CONFIG_URL = "https://api.rudderlabs.com/sourceConfig/?p=web&v=1.2.8";
+  var CONFIG_URL = "https://api.rudderlabs.com/sourceConfig/?p=web&v=1.2.9";
   var MAX_WAIT_FOR_INTEGRATION_LOAD = 10000;
   var INTEGRATION_LOAD_CHECK_INTERVAL = 1000;
   /* module.exports = {
@@ -22871,12 +22865,11 @@ var rudderanalytics = (function (exports) {
 
   /* eslint-disable no-use-before-define */
 
-  var ScriptLoader = function ScriptLoader(id, src, async) {
+  var ScriptLoader = function ScriptLoader(id, src) {
     logger.debug("in script loader=== ".concat(id));
     var js = document.createElement("script");
     js.src = src;
-    async = async === undefined ? true : async;
-    js.async = async;
+    js.async = true;
     js.type = "text/javascript";
     js.id = id;
     var e = document.getElementsByTagName("script")[0];
@@ -30450,6 +30443,85 @@ var rudderanalytics = (function (exports) {
     return Kissmetrics;
   }();
 
+  /* eslint-disable no-param-reassign */
+
+  var itemsPayload = function itemsPayload(message, payload) {
+    payload.Items.ProductID = getValue(message, "properties.items.product_id");
+    payload.Items.SKU = getValue(message, "properties.items.sku");
+    payload.Items.ProductName = getValue(message, "properties.items.name");
+    payload.Items.Quantity = getValue(message, "properties.items.quantity");
+    payload.Items.ItemPrice = getValue(message, "properties.items.price");
+    payload.Items.RowTotal = getValue(message, "properties.items.total");
+    payload.Items.ProductURL = getValue(message, "properties.items.url");
+    payload.Items.ImageURL = getValue(message, "properties.items.image_url");
+    payload.Items.ProductCategories = getValue(message, "properties.items.categories");
+    payload.Items = removeUndefinedAndNullValues(payload.Items);
+    return payload;
+  };
+
+  var ecommEventPayload = function ecommEventPayload(event, message) {
+    var payload = {};
+
+    switch (event.toLowerCase().trim()) {
+      case "Viewed Product":
+        {
+          payload.ProductName = getValue(message, "properties.name");
+          payload.ProductID = getValue(message, "properties.product_id");
+          payload.SKU = getValue(message, "properties.sku");
+          payload.ImageURL = getValue(message, "properties.image_url");
+          payload.URL = getValue(message, "properties.url");
+          payload.Brand = getValue(message, "properties.brand");
+          payload.Price = getValue(message, "properties.price");
+          payload.CompareAtPrice = getValue(message, "properties.compare_at_price");
+          break;
+        }
+
+      case "Added to Cart":
+        {
+          payload.$value = getValue(message, "properties.price");
+          payload.AddedItemProductName = getValue(message, "properties.name");
+          payload.AddedItemProductID = getValue(message, "properties.product_id");
+          payload.AddedItemSKU = getValue(message, "properties.sku");
+          payload.AddedItemImageURL = getValue(message, "properties.image_url");
+          payload.AddedItemURL = getValue(message, "properties.url");
+          payload.AddedItemPrice = getValue(message, "properties.price");
+          payload.AddedItemQuantity = getValue(message, "properties.quantity");
+          payload.AddedItemCategories = getValue(message, "properties.categories");
+          payload.ItemNames = getValue(message, "properties.item_names");
+          payload.CheckoutURL = getValue(message, "properties.checkout_url");
+          payload.Items = getValue(message, "properties.items");
+
+          if (payload.Items) {
+            itemsPayload(message, payload);
+          }
+
+          break;
+        }
+
+      case "Started Checkout":
+        {
+          payload.$event_id = getValue(message, "properties.order_id");
+          payload.$value = getValue(message, "properties.value");
+          payload.Categories = getValue(message, "properties.categories");
+          payload.CheckoutURL = getValue(message, "properties.checkout_url");
+          payload.ItemNames = getValue(message, "item_names");
+          payload.Items = getValue(message, "properties.items");
+
+          if (payload.Items) {
+            itemsPayload(message, payload);
+          }
+
+          break;
+        }
+    }
+
+    if (payload) {
+      payload = removeUndefinedAndNullValues(payload);
+    }
+
+    return payload;
+  };
+
   var Klaviyo = /*#__PURE__*/function () {
     function Klaviyo(config) {
       _classCallCheck(this, Klaviyo);
@@ -30461,6 +30533,14 @@ var rudderanalytics = (function (exports) {
       this.name = "KLAVIYO";
       this.keysToExtract = ["context.traits"];
       this.exclusionKeys = ["email", "E-mail", "Email", "firstName", "firstname", "first_name", "lastName", "lastname", "last_name", "phone", "Phone", "title", "organization", "city", "City", "region", "country", "Country", "zip", "image", "timezone", "anonymousId", "userId", "properties"];
+      this.ecomExclusionKeys = ["name", "product_id", "sku", "imgae_url", "url", "brand", "price", "compare_at_price", "quantity", "categories", "products", "product_names", "order_id", "value", "checkout_url"];
+      this.ecomEvents = ["product viewed", "product clicked", "product added", "checkout started"];
+      this.eventNameMapping = {
+        "product viewed": "Viewed Product",
+        "product clicked": "Viewed Product",
+        "product added": "Added to Cart",
+        "checkout started": "Started Checkout"
+      };
     }
 
     _createClass(Klaviyo, [{
@@ -30539,6 +30619,21 @@ var rudderanalytics = (function (exports) {
         var message = rudderElement.message;
 
         if (message.properties) {
+          // ecomm events
+          var event = message.event.event;
+          event = event ? event.trim().toLowerCase() : event;
+
+          if (this.ecomEvents.includes(event)) {
+            var payload = ecommEventPayload(this.eventNameMapping[event], message);
+            payload = extractCustomFields(message, payload, "properties", this.exclusionKeys);
+
+            if (isNotEmpty(payload)) {
+              window._learnq.push(["track", this.eventNameMapping[event], payload]);
+            }
+
+            return;
+          }
+
           var propsPayload = message.properties;
 
           if (propsPayload.revenue) {
@@ -33213,7 +33308,7 @@ var rudderanalytics = (function (exports) {
     return payload;
   };
 
-  var ecommEventPayload = function ecommEventPayload(event, message) {
+  var ecommEventPayload$1 = function ecommEventPayload(event, message) {
     var payload = {
       price: getValue(message, "properties.price"),
       currency: getValue(message, "properties.currency"),
@@ -33472,31 +33567,31 @@ var rudderanalytics = (function (exports) {
 
         switch (event.toLowerCase().trim()) {
           case "order completed":
-            sendEvent(this.ecomEvents.PURCHASE, ecommEventPayload(event, message));
+            sendEvent(this.ecomEvents.PURCHASE, ecommEventPayload$1(event, message));
             break;
 
           case "checkout started":
-            sendEvent(this.ecomEvents.START_CHECKOUT, ecommEventPayload(event, message));
+            sendEvent(this.ecomEvents.START_CHECKOUT, ecommEventPayload$1(event, message));
             break;
 
           case "product added":
-            sendEvent(this.ecomEvents.ADD_CART, ecommEventPayload(event, message));
+            sendEvent(this.ecomEvents.ADD_CART, ecommEventPayload$1(event, message));
             break;
 
           case "payment info entered":
-            sendEvent(this.ecomEvents.ADD_BILLING, ecommEventPayload(event, message));
+            sendEvent(this.ecomEvents.ADD_BILLING, ecommEventPayload$1(event, message));
             break;
 
           case "promotion clicked":
-            sendEvent(this.ecomEvents.AD_CLICK, ecommEventPayload(event, message));
+            sendEvent(this.ecomEvents.AD_CLICK, ecommEventPayload$1(event, message));
             break;
 
           case "promotion viewed":
-            sendEvent(this.ecomEvents.AD_VIEW, ecommEventPayload(event, message));
+            sendEvent(this.ecomEvents.AD_VIEW, ecommEventPayload$1(event, message));
             break;
 
           case "product added to wishlist":
-            sendEvent(this.ecomEvents.ADD_TO_WISHLIST, ecommEventPayload(event, message));
+            sendEvent(this.ecomEvents.ADD_TO_WISHLIST, ecommEventPayload$1(event, message));
             break;
 
           default:
@@ -33798,75 +33893,6 @@ var rudderanalytics = (function (exports) {
     return VWO;
   }();
 
-  var GoogleOptimize = /*#__PURE__*/function () {
-    function GoogleOptimize(config) {
-      _classCallCheck(this, GoogleOptimize);
-
-      this.name = "GOOGLE_OPTIMIZE";
-      this.ga = config.ga;
-      this.trackingId = config.trackingId;
-      this.containerId = config.containerId;
-      this.async = config.async;
-      this.aflicker = config.aflicker;
-    }
-
-    _createClass(GoogleOptimize, [{
-      key: "init",
-      value: function init() {
-        logger.debug("===in init Google Optimize===");
-
-        if (!this.containerId) {
-          return;
-        } // load optimize script first
-
-
-        ScriptLoader("Google Optimize", "https://www.googleoptimize.com/optimize.js?id=".concat(this.containerId), this.async);
-
-        if (this.ga) {
-          var gtag = function gtag() {
-            dataLayer.push(arguments);
-          };
-
-          if (!this.trackingId) {
-            return;
-          }
-
-          ScriptLoader("Google Tag Manager", "https://www.googletagmanager.com/gtag/js?id=".concat(this.trackingId));
-          window.dataLayer = window.dataLayer || [];
-          gtag("js", new Date());
-          gtag("config", "".concat(this.trackingId));
-        } // anti flicker snippet contains insertBefore since it needs to be executed before any other script
-        // link -> https://support.google.com/optimize/answer/7100284?hl=en&ref_topic=6197443
-
-
-        if (this.aflicker) {
-          var flick = document.createElement("style");
-          flick.innerHTML = ".async-hide { opacity: 0 !important}";
-          var js = document.createElement("script");
-          js.innerHTML = "(function(a,s,y,n,c,h,i,d,e){s.className+=' '+y;h.start=1*new Date;h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};(a[n]=a[n]||[]).hide=h;setTimeout(function(){i();h.end=null},c);h.timeout=c;})(window,document.documentElement,'async-hide','dataLayer',4000,{'".concat(this.containerId, "':true});");
-          var e = document.getElementsByTagName("script")[0];
-          e.parentNode.insertBefore(flick, e); // style tag in anti flicker snippet should be before the a-flicker script as per docs
-
-          e.parentNode.insertBefore(js, e);
-        }
-      }
-    }, {
-      key: "isLoaded",
-      value: function isLoaded() {
-        logger.debug("=== in isLoaded Google Optimize===");
-        return !!window.dataLayer;
-      }
-    }, {
-      key: "isReady",
-      value: function isReady() {
-        logger.debug("=== in isReady Google Optimize===");
-        return !!window.dataLayer;
-      }
-    }]);
-
-    return GoogleOptimize;
-  }();
-
   // This function helps to populate the sale object
   var updateSaleObject = function updateSaleObject(sale, properties) {
     if (properties.total) sale.setTotalCost(properties.total);
@@ -34062,7 +34088,6 @@ var rudderanalytics = (function (exports) {
     SNAP_PIXEL: SnapPixel,
     TVSQUARED: TVSquared,
     VWO: VWO,
-    GOOGLE_OPTIMIZE: GoogleOptimize,
     POST_AFFILIATE_PRO: PostAffiliatePro
   };
 
@@ -34073,7 +34098,7 @@ var rudderanalytics = (function (exports) {
     this.build = "1.0.0";
     this.name = "RudderLabs JavaScript SDK";
     this.namespace = "com.rudderlabs.javascript";
-    this.version = "1.2.8";
+    this.version = "1.2.9";
   };
 
   // Library information class
@@ -34081,7 +34106,7 @@ var rudderanalytics = (function (exports) {
     _classCallCheck(this, RudderLibraryInfo);
 
     this.name = "RudderLabs JavaScript SDK";
-    this.version = "1.2.8";
+    this.version = "1.2.9";
   }; // Operating System information class
 
 

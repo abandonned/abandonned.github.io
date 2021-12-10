@@ -3,7 +3,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-         <!-- <script>
+         <script>
             rudderanalytics = window.rudderanalytics = [];
     
             var methods = [
@@ -31,8 +31,30 @@
             }
             rudderanalytics.load(
             "1oWSfFP899H6FTjgJiikOl7G4Im",
-            "https://rudderstacaijiuzfpaikt.dataplane.rudderstack.com",{loglevel: "DEBUG", configUrl: "https://api.rudderlabs.com"}
+            "https://hosted-dev-dataplane.dev-rudder.rudderlabs.com",{loglevel: "DEBUG", configUrl: "https://api.dev.rudderlabs.com"}
             );
+
+            rudderanalytics.identify("testuserid2", {
+              firstName: "Name",
+              lastName: "Surname",
+              email: "name@website.com",
+              phone: "+12 345 678 900",
+              userId: "userId",
+              title: "Owner",
+              organization: "Company",
+              city: "Tokyo",
+              region: "ABC",
+              country: "JP",
+              zip: "100-0001",
+              Flagged: false,
+              Residence: "Shibuya",
+              properties: {
+                listId: "XUepkK",
+                subscribe: true,
+                consent: "email",
+                smsConsent: true,
+              },
+            })
             // rudderanalytics.identify("ankitcingh93@gmail.com", {
             //     "first_name": "James",
             //     "last_name": "Doe",
@@ -40,7 +62,7 @@
             // });
             //For example,
             //rudderanalytics.load("1Qb1F3jSWv0eKFBPZcrM7ypgjVo", "http://localhost:8080");
-        </script> -->
+        </script>
         <!--<script src ="./browser.js"> </script> -->
          <!-- <script src="https://cdn.rudderlabs.com/v1.1/rudder-analytics.min.js"></script>  -->
         <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -62,7 +84,7 @@ h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};
 
     <script src="https://www.googleoptimize.com/optimize.js?id=OPT-WKTW4MG"></script> -->
 
-    <script type="application/javascript" async src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=V2nfyK"></script>
+    <!-- <script type="application/javascript" async src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=V2nfyK"></script>
     <script type="text/javascript">
         var _learnq = _learnq || [];
         var item = {
@@ -74,8 +96,8 @@ h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};
     };
     _learnq.push(["identify", item]);
     </script>
-    <!-- Viewed product -->
-    <script type="text/javascript">
+    Viewed product -->
+    <!-- <script type="text/javascript">
       var _learnq = _learnq || [];
       var item = {
         "product_name": "Winnie the Pooh",
@@ -90,7 +112,7 @@ h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};
         "currency": "USD"
       };
       _learnq.push(["track", "test event", item]);
-   </script>
+   </script> --> 
      <!-- Added to cart
      <script type="text/javascript">
         _learnq.push(['track', "Added to Cart", {
