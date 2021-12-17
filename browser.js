@@ -30445,18 +30445,18 @@ var rudderanalytics = (function (exports) {
 
   /* eslint-disable no-param-reassign */
 
-  var itemsPayload = function itemsPayload(message) {
+  var itemsPayload = function itemsPayload(item) {
     var itemObj = {};
-    itemObj.ProductID = getValue(message, "properties.items.product_id");
-    itemObj.SKU = getValue(message, "properties.items.sku");
-    itemObj.ProductName = getValue(message, "properties.items.name");
-    itemObj.Quantity = getValue(message, "properties.items.quantity");
-    itemObj.ItemPrice = getValue(message, "properties.items.price");
-    itemObj.RowTotal = getValue(message, "properties.items.total");
-    itemObj.ProductURL = getValue(message, "properties.items.url");
-    itemObj.ImageURL = getValue(message, "properties.items.image_url");
-    itemObj.ProductCategories = getValue(message, "properties.items.categories");
-    itemObj = removeUndefinedAndNullValues(itemObj.Items);
+    itemObj.ProductID = item.product_id;
+    itemObj.SKU = item.sku;
+    itemObj.ProductName = item.name;
+    itemObj.Quantity = item.quantity;
+    itemObj.ItemPrice = item.price;
+    itemObj.RowTotal = item.total;
+    itemObj.ProductURL = item.url;
+    itemObj.ImageURL = item.image_url;
+    itemObj.ProductCategories = item.categories;
+    itemObj = removeUndefinedAndNullValues(itemObj);
     return itemObj;
   };
 
