@@ -30445,18 +30445,19 @@ var rudderanalytics = (function (exports) {
 
   /* eslint-disable no-param-reassign */
 
-  var itemsPayload = function itemsPayload(message, payload) {
-    payload.Items.ProductID = getValue(message, "properties.items.product_id");
-    payload.Items.SKU = getValue(message, "properties.items.sku");
-    payload.Items.ProductName = getValue(message, "properties.items.name");
-    payload.Items.Quantity = getValue(message, "properties.items.quantity");
-    payload.Items.ItemPrice = getValue(message, "properties.items.price");
-    payload.Items.RowTotal = getValue(message, "properties.items.total");
-    payload.Items.ProductURL = getValue(message, "properties.items.url");
-    payload.Items.ImageURL = getValue(message, "properties.items.image_url");
-    payload.Items.ProductCategories = getValue(message, "properties.items.categories");
-    payload.Items = removeUndefinedAndNullValues(payload.Items);
-    return payload;
+  var itemsPayload = function itemsPayload(message) {
+    var itemObj = {};
+    itemObj.ProductID = getValue(message, "properties.items.product_id");
+    itemObj.SKU = getValue(message, "properties.items.sku");
+    itemObj.ProductName = getValue(message, "properties.items.name");
+    itemObj.Quantity = getValue(message, "properties.items.quantity");
+    itemObj.ItemPrice = getValue(message, "properties.items.price");
+    itemObj.RowTotal = getValue(message, "properties.items.total");
+    itemObj.ProductURL = getValue(message, "properties.items.url");
+    itemObj.ImageURL = getValue(message, "properties.items.image_url");
+    itemObj.ProductCategories = getValue(message, "properties.items.categories");
+    itemObj = removeUndefinedAndNullValues(itemObj.Items);
+    return itemObj;
   };
 
   var ecommEventPayload = function ecommEventPayload(event, message) {
@@ -30473,12 +30474,13 @@ var rudderanalytics = (function (exports) {
           payload.Brand = getValue(message, "properties.brand");
           payload.Price = getValue(message, "properties.price");
           payload.CompareAtPrice = getValue(message, "properties.compare_at_price");
+          payload.Categories = getValue(message, "properties.categories");
           break;
         }
 
       case "Added to Cart":
         {
-          payload.$value = getValue(message, "properties.price");
+          payload.$value = getValue(message, "properties.value");
           payload.AddedItemProductName = getValue(message, "properties.name");
           payload.AddedItemProductID = getValue(message, "properties.product_id");
           payload.AddedItemSKU = getValue(message, "properties.sku");
@@ -30489,10 +30491,18 @@ var rudderanalytics = (function (exports) {
           payload.AddedItemCategories = getValue(message, "properties.categories");
           payload.ItemNames = getValue(message, "properties.item_names");
           payload.CheckoutURL = getValue(message, "properties.checkout_url");
-          payload.Items = getValue(message, "properties.items");
 
-          if (payload.Items) {
-            itemsPayload(message, payload);
+          if (message.properties.items && Array.isArray(message.properties.items)) {
+            var itemArr = [];
+            message.properties.items.forEach(function (element) {
+              var item = itemsPayload(element);
+              item = removeUndefinedAndNullValues(item);
+
+              if (isNotEmpty(item)) {
+                itemArr.push(item);
+              }
+            });
+            payload.Items = itemArr;
           }
 
           break;
@@ -30505,10 +30515,18 @@ var rudderanalytics = (function (exports) {
           payload.Categories = getValue(message, "properties.categories");
           payload.CheckoutURL = getValue(message, "properties.checkout_url");
           payload.ItemNames = getValue(message, "item_names");
-          payload.Items = getValue(message, "properties.items");
 
-          if (payload.Items) {
-            itemsPayload(message, payload);
+          if (message.properties.items && Array.isArray(message.properties.items)) {
+            var _itemArr = [];
+            message.properties.items.forEach(function (element) {
+              var item = itemsPayload(element);
+              item = removeUndefinedAndNullValues(item);
+
+              if (isNotEmpty(item)) {
+                _itemArr.push(item);
+              }
+            });
+            payload.Items = _itemArr;
           }
 
           break;
@@ -30533,7 +30551,7 @@ var rudderanalytics = (function (exports) {
       this.name = "KLAVIYO";
       this.keysToExtract = ["context.traits"];
       this.exclusionKeys = ["email", "E-mail", "Email", "firstName", "firstname", "first_name", "lastName", "lastname", "last_name", "phone", "Phone", "title", "organization", "city", "City", "region", "country", "Country", "zip", "image", "timezone", "anonymousId", "userId", "properties"];
-      this.ecomExclusionKeys = ["name", "product_id", "sku", "imgae_url", "url", "brand", "price", "compare_at_price", "quantity", "categories", "products", "product_names", "order_id", "value", "checkout_url"];
+      this.ecomExclusionKeys = ["name", "product_id", "sku", "imgae_url", "url", "brand", "price", "compare_at_price", "quantity", "categories", "products", "product_names", "order_id", "value", "checkout_url", "item_names", "items", "checkout_url"];
       this.ecomEvents = ["product viewed", "product clicked", "product added", "checkout started"];
       this.eventNameMapping = {
         "product viewed": "Viewed Product",
@@ -30623,9 +30641,14 @@ var rudderanalytics = (function (exports) {
           var event = message.event.event;
           event = event ? event.trim().toLowerCase() : event;
 
-          if (this.ecomEvents.includes(event)) {
-            var payload = ecommEventPayload(this.eventNameMapping[event], message);
-            payload = extractCustomFields(message, payload, "properties", this.exclusionKeys);
+          if (this.ecomEvents.includes(event) && message.properties) {
+            var payload = ecommEventPayload(this.eventNameMapping[event], message.properties);
+            var customProperties = {};
+            customProperties = extractCustomFields(message, customProperties, "properties", this.exclusionKeys);
+
+            if (isNotEmpty(customProperties)) {
+              payload = _objectSpread2(_objectSpread2({}, payload), customProperties);
+            }
 
             if (isNotEmpty(payload)) {
               window._learnq.push(["track", this.eventNameMapping[event], payload]);

@@ -1,72 +1,91 @@
-    <!DOCTYPE html>
-    <html lang="en">
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html>
+<html lang="en">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-         <script>
-            rudderanalytics = window.rudderanalytics = [];
-    
-            var methods = [
-            "load",
-            "page",
-            "track",
-            "identify",
-            "alias",
-            "group",
-            "ready",
-            "reset",
-            "getAnonymousId",
-            "setAnonymousId",
-            ];
-    
-            for (var i = 0; i < methods.length; i++) {
-            var method = methods[i];
-            rudderanalytics[method] = (function (methodName) {
-                return function () {
-                rudderanalytics.push(
-                    [methodName].concat(Array.prototype.slice.call(arguments))
-                );
-                };
-            })(method);
-            }
-            rudderanalytics.load(
-            "1oWSfFP899H6FTjgJiikOl7G4Im",
-            "https://hosted-dev-dataplane.dev-rudder.rudderlabs.com",{loglevel: "DEBUG", configUrl: "https://api.dev.rudderlabs.com"}
-            );
+  <script>
+    rudderanalytics = window.rudderanalytics = [];
 
-            rudderanalytics.identify("testuserid2", {
-              firstName: "Name",
-              lastName: "Surname",
-              email: "name@website.com",
-              phone: "+12 345 678 900",
-              userId: "userId",
-              title: "Owner",
-              organization: "Company",
-              city: "Tokyo",
-              region: "ABC",
-              country: "JP",
-              zip: "100-0001",
-              Flagged: false,
-              Residence: "Shibuya",
-              properties: {
-                listId: "XUepkK",
-                subscribe: true,
-                consent: "email",
-                smsConsent: true,
-              },
-            })
-            // rudderanalytics.identify("ankitcingh93@gmail.com", {
-            //     "first_name": "James",
-            //     "last_name": "Doe",
-            //     "phone": "+91237416221"
-            // });
-            //For example,
-            //rudderanalytics.load("1Qb1F3jSWv0eKFBPZcrM7ypgjVo", "http://localhost:8080");
-        </script>
-        <!--<script src ="./browser.js"> </script> -->
-         <!-- <script src="https://cdn.rudderlabs.com/v1.1/rudder-analytics.min.js"></script>  -->
-        <!-- Global site tag (gtag.js) - Google Analytics -->
- <!--<script async src="https://www.googletagmanager.com/gtag/js?id=UA-199648645-1"></script>
+    var methods = [
+      "load",
+      "page",
+      "track",
+      "identify",
+      "alias",
+      "group",
+      "ready",
+      "reset",
+      "getAnonymousId",
+      "setAnonymousId",
+    ];
+
+    for (var i = 0; i < methods.length; i++) {
+      var method = methods[i];
+      rudderanalytics[method] = (function (methodName) {
+        return function () {
+          rudderanalytics.push(
+            [methodName].concat(Array.prototype.slice.call(arguments))
+          );
+        };
+      })(method);
+    }
+    rudderanalytics.load(
+      "1uOCf3OmP7FhFlS6l0ZYYpQfk08",
+      "https://hosted-dev-dataplane.dev-rudder.rudderlabs.com",
+      { loglevel: "DEBUG", configUrl: "https://api.dev.rudderlabs.com" }
+    );
+
+    rudderanalytics.identify("testuserid3", {
+      firstName: "Test",
+      lastName: "ing3",
+      email: "name3@website.com",
+      phone: "+12 345 678 903",
+      userId: "userId3",
+      title: "Owner",
+      organization: "Company",
+      city: "Tokyo",
+      region: "ABC",
+      country: "JP",
+      zip: "100-0001",
+      Flagged: false,
+      Residence: "Shibuya",
+    });
+    rudderanalytics.track("Product added ", {
+      price: 23423,
+      name: "heyllo",
+      ProductID: "1114",
+      sku: "WINNIEPOOH4",
+      Image_url: "http://www.example.com/path/to/product/image.png",
+      Url: "http://www.example.com/path/to/product",
+      Brand: "Kids Books4",
+      Quantity: 31,
+      Categories: ["Fiction", "Children"],
+      Item_names: ["Winnie the Pooh", "A Tale of Two Cities"],
+      Checkout_url: "heythere.com",
+      Items: [
+        {
+          product_id: "123",
+          row_total: 15,
+        },
+        {
+          product_id: "123",
+          row_total: 15,
+        },
+      ],
+    });
+    // rudderanalytics.identify("ankitcingh93@gmail.com", {
+    //     "first_name": "James",
+    //     "last_name": "Doe",
+    //     "phone": "+91237416221"
+    // });
+    //For example,
+    //rudderanalytics.load("1Qb1F3jSWv0eKFBPZcrM7ypgjVo", "http://localhost:8080");
+  </script>
+  <script src="./browser.js"></script>
+
+  <!-- <script src="https://cdn.rudderlabs.com/v1.1/rudder-analytics.min.js"></script>  -->
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <!--<script async src="https://www.googletagmanager.com/gtag/js?id=UA-199648645-1"></script>
         <script>
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
@@ -74,8 +93,8 @@
 
           gtag('config', 'UA-199648645-1');
         </script> -->
-        
-       <!-- <script>(function(a,s,y,n,c,h,i,d,e){s.className+=' '+y;h.start=1*new Date;
+
+  <!-- <script>(function(a,s,y,n,c,h,i,d,e){s.className+=' '+y;h.start=1*new Date;
 h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};
 (a[n]=a[n]||[]).hide=h;setTimeout(function(){i();h.end=null},c);h.timeout=c;
 })(window,document.documentElement,'async-hide','dataLayer',4000,
@@ -84,7 +103,7 @@ h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};
 
     <script src="https://www.googleoptimize.com/optimize.js?id=OPT-WKTW4MG"></script> -->
 
-    <!-- <script type="application/javascript" async src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=V2nfyK"></script>
+  <!-- <script type="application/javascript" async src="https://static.klaviyo.com/onsite/js/klaviyo.js?company_id=V2nfyK"></script>
     <script type="text/javascript">
         var _learnq = _learnq || [];
         var item = {
@@ -97,7 +116,7 @@ h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};
     _learnq.push(["identify", item]);
     </script>
     Viewed product -->
-    <!-- <script type="text/javascript">
+  <!-- <script type="text/javascript">
       var _learnq = _learnq || [];
       var item = {
         "product_name": "Winnie the Pooh",
@@ -112,16 +131,15 @@ h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};
         "currency": "USD"
       };
       _learnq.push(["track", "test event", item]);
-   </script> --> 
-     <!-- Added to cart
+   </script> -->
+  <!-- Added to cart
      <script type="text/javascript">
         _learnq.push(['track', "Added to Cart", {
         }]);
       </script> -->
 
-      <!-- <script type="text/javascript">
+  <!-- <script type="text/javascript">
         _learnq.push(['track', 'Started Checkout', {
         }]);
       </script> -->
-
-    </html>
+</html>
