@@ -30463,7 +30463,7 @@ var rudderanalytics = (function (exports) {
   var ecommEventPayload = function ecommEventPayload(event, message) {
     var payload = {};
 
-    switch (event.toLowerCase().trim()) {
+    switch (event) {
       case "Viewed Product":
         {
           payload.ProductName = getValue(message, "properties.name");
@@ -30551,7 +30551,7 @@ var rudderanalytics = (function (exports) {
       this.name = "KLAVIYO";
       this.keysToExtract = ["context.traits"];
       this.exclusionKeys = ["email", "E-mail", "Email", "firstName", "firstname", "first_name", "lastName", "lastname", "last_name", "phone", "Phone", "title", "organization", "city", "City", "region", "country", "Country", "zip", "image", "timezone", "anonymousId", "userId", "properties"];
-      this.ecomExclusionKeys = ["name", "product_id", "sku", "imgae_url", "url", "brand", "price", "compare_at_price", "quantity", "categories", "products", "product_names", "order_id", "value", "checkout_url", "item_names", "items", "checkout_url"];
+      this.ecomExclusionKeys = ["name", "product_id", "sku", "image_url", "url", "brand", "price", "compare_at_price", "quantity", "categories", "products", "product_names", "order_id", "value", "checkout_url", "item_names", "items", "checkout_url"];
       this.ecomEvents = ["product viewed", "product clicked", "product added", "checkout started"];
       this.eventNameMapping = {
         "product viewed": "Viewed Product",
@@ -30638,14 +30638,15 @@ var rudderanalytics = (function (exports) {
 
         if (message.properties) {
           // ecomm events
-          var event = message.event.event;
+          var event = getValue(message, "event");
           logger.debug("at line 148");
           event = event ? event.trim().toLowerCase() : event;
 
           if (this.ecomEvents.includes(event) && message.properties) {
             var payload = ecommEventPayload(this.eventNameMapping[event], message);
+            var eventName = this.eventNameMapping[event];
             var customProperties = {};
-            customProperties = extractCustomFields(message, customProperties, "properties", this.exclusionKeys);
+            customProperties = extractCustomFields(message, customProperties, ["properties"], this.ecomExclusionKeys);
             logger.debug("at line 159");
 
             if (isNotEmpty(customProperties)) {
@@ -30653,22 +30654,20 @@ var rudderanalytics = (function (exports) {
             }
 
             if (isNotEmpty(payload)) {
-              window._learnq.push(["track", this.eventNameMapping[event], payload]);
+              window._learnq.push(["track", eventName, payload]);
+            }
+          } else {
+            var propsPayload = message.properties;
+
+            if (propsPayload.revenue) {
+              propsPayload.$value = propsPayload.revenue;
+              delete propsPayload.revenue;
             }
 
-            return;
+            logger.debug("at line 173");
+
+            window._learnq.push(["track", message.event, propsPayload]);
           }
-
-          var propsPayload = message.properties;
-
-          if (propsPayload.revenue) {
-            propsPayload.$value = propsPayload.revenue;
-            delete propsPayload.revenue;
-          }
-
-          logger.debug("at line 173");
-
-          window._learnq.push(["track", message.event, propsPayload]);
         } else window._learnq.push(["track", message.event]);
       }
     }, {
