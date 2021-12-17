@@ -30642,7 +30642,7 @@ var rudderanalytics = (function (exports) {
           event = event ? event.trim().toLowerCase() : event;
 
           if (this.ecomEvents.includes(event) && message.properties) {
-            var payload = ecommEventPayload(this.eventNameMapping[event], message.properties);
+            var payload = ecommEventPayload(this.eventNameMapping[event], message);
             var customProperties = {};
             customProperties = extractCustomFields(message, customProperties, "properties", this.exclusionKeys);
 
