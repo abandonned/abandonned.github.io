@@ -30639,7 +30639,6 @@ var rudderanalytics = (function (exports) {
         if (message.properties) {
           // ecomm events
           var event = getValue(message, "event");
-          logger.debug("at line 148");
           event = event ? event.trim().toLowerCase() : event;
 
           if (this.ecomEvents.includes(event) && message.properties) {
@@ -30647,7 +30646,6 @@ var rudderanalytics = (function (exports) {
             var eventName = this.eventNameMapping[event];
             var customProperties = {};
             customProperties = extractCustomFields(message, customProperties, ["properties"], this.ecomExclusionKeys);
-            logger.debug("at line 159");
 
             if (isNotEmpty(customProperties)) {
               payload = _objectSpread2(_objectSpread2({}, payload), customProperties);
@@ -30663,8 +30661,6 @@ var rudderanalytics = (function (exports) {
               propsPayload.$value = propsPayload.revenue;
               delete propsPayload.revenue;
             }
-
-            logger.debug("at line 173");
 
             window._learnq.push(["track", message.event, propsPayload]);
           }
