@@ -5466,6 +5466,11 @@ var rudderanalytics = (function (exports) {
     quantumMetric: "QUANTUMMETRIC",
     quantummetric: "QUANTUMMETRIC",
     Quantum_Metric: "QUANTUMMETRIC",
+    "Google Optimize": "GOOGLE_OPTIMIZE",
+    GOOGLE_OPTIMIZE: "GOOGLE_OPTIMIZE",
+    GoogleOptimize: "GOOGLE_OPTIMIZE",
+    Googleoptimize: "GOOGLE_OPTIMIZE",
+    GOOGLEOPTIMIZE: "GOOGLE_OPTIMIZE",
     PostAffiliatePro: "POST_AFFILIATE_PRO",
     Post_affiliate_pro: "POST_AFFILIATE_PRO",
     "Post Affiliate Pro": "POST_AFFILIATE_PRO",
@@ -5517,6 +5522,7 @@ var rudderanalytics = (function (exports) {
     MP: "Mixpanel",
     QUALTRICS: "Qualtrics",
     SENTRY: "Sentry",
+    GOOGLE_OPTIMIZE: "GoogleOptimize",
     POST_AFFILIATE_PRO: "PostAffiliatePro"
   };
 
@@ -5561,7 +5567,7 @@ var rudderanalytics = (function (exports) {
     PRODUCT_REVIEWED: "Product Reviewed"
   }; // Enumeration for integrations supported
 
-  var CONFIG_URL = "https://api.rudderlabs.com/sourceConfig/?p=web&v=1.2.9";
+  var CONFIG_URL = "https://api.rudderlabs.com/sourceConfig/?p=web&v=1.2.15";
   var MAX_WAIT_FOR_INTEGRATION_LOAD = 10000;
   var INTEGRATION_LOAD_CHECK_INTERVAL = 1000;
   /* module.exports = {
@@ -11512,6 +11518,10 @@ var rudderanalytics = (function (exports) {
 
       if (Store.enabled) {
         this.storage = Store;
+      }
+
+      if (!this.storage) {
+        throw Error("Could not initialize the SDK :: no storage is available");
       }
     }
 
@@ -22864,12 +22874,14 @@ var rudderanalytics = (function (exports) {
   };
 
   /* eslint-disable no-use-before-define */
+  var defaultAsyncState = true;
 
   var ScriptLoader = function ScriptLoader(id, src) {
+    var async = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : defaultAsyncState;
     logger.debug("in script loader=== ".concat(id));
     var js = document.createElement("script");
     js.src = src;
-    js.async = true;
+    js.async = async === undefined ? defaultAsyncState : async;
     js.type = "text/javascript";
     js.id = id;
     var e = document.getElementsByTagName("script")[0];
@@ -26971,8 +26983,13 @@ var rudderanalytics = (function (exports) {
       }
     }, {
       key: "page",
-      value: function page() {
-        window.fbq("track", "PageView");
+      value: function page(rudderElement) {
+        var _rudderElement$messag = rudderElement.message,
+            properties = _rudderElement$messag.properties,
+            messageId = _rudderElement$messag.messageId;
+        window.fbq("track", "PageView", properties, {
+          eventID: messageId
+        });
       }
     }, {
       key: "identify",
@@ -26988,10 +27005,10 @@ var rudderanalytics = (function (exports) {
         var _this = this;
 
         var self = this;
-        var _rudderElement$messag = rudderElement.message,
-            event = _rudderElement$messag.event,
-            properties = _rudderElement$messag.properties,
-            messageId = _rudderElement$messag.messageId;
+        var _rudderElement$messag2 = rudderElement.message,
+            event = _rudderElement$messag2.event,
+            properties = _rudderElement$messag2.properties,
+            messageId = _rudderElement$messag2.messageId;
         var revValue;
         var currVal;
 
@@ -27302,25 +27319,25 @@ var rudderanalytics = (function (exports) {
       }
       /**
        * Get the Facebook Content Type
-       * 
+       *
        * Can be `product`, `destination`, `flight` or `hotel`.
-       * 
+       *
        * This can be overridden within the message
        * `options.integrations.FACEBOOK_PIXEL.contentType`, or alternatively you can
        * set the "Map Categories to Facebook Content Types" setting within
        * RudderStack config and then set the corresponding commerce category in
        * `track()` properties.
-       * 
+       *
        * https://www.facebook.com/business/help/606577526529702?id=1205376682832142
        */
 
     }, {
       key: "getContentType",
       value: function getContentType(rudderElement, defaultValue) {
-        var _rudderElement$messag2, _rudderElement$messag3;
+        var _rudderElement$messag3, _rudderElement$messag4;
 
         // Get the message-specific override if it exists in the options parameter of `track()`
-        var contentTypeMessageOverride = (_rudderElement$messag2 = rudderElement.message.integrations) === null || _rudderElement$messag2 === void 0 ? void 0 : (_rudderElement$messag3 = _rudderElement$messag2.FACEBOOK_PIXEL) === null || _rudderElement$messag3 === void 0 ? void 0 : _rudderElement$messag3.contentType;
+        var contentTypeMessageOverride = (_rudderElement$messag3 = rudderElement.message.integrations) === null || _rudderElement$messag3 === void 0 ? void 0 : (_rudderElement$messag4 = _rudderElement$messag3.FACEBOOK_PIXEL) === null || _rudderElement$messag4 === void 0 ? void 0 : _rudderElement$messag4.contentType;
         if (contentTypeMessageOverride) return [contentTypeMessageOverride]; // Otherwise check if there is a replacement set for all Facebook Pixel
         // track calls of this category
 
@@ -29104,6 +29121,7 @@ var rudderanalytics = (function (exports) {
       this.pageLoadConversions = config.pageLoadConversions;
       this.clickEventConversions = config.clickEventConversions;
       this.defaultPageConversion = config.defaultPageConversion;
+      this.dynamicRemarketing = config.dynamicRemarketing;
       this.sendPageView = config.sendPageView || true;
       this.conversionLinker = config.conversionLinker || true;
       this.disableAdPersonalization = config.disableAdPersonalization || false;
@@ -29148,44 +29166,85 @@ var rudderanalytics = (function (exports) {
       }
     }, {
       key: "identify",
-      value: function identify(rudderElement) {
+      value: function identify() {
         logger.debug("[GoogleAds] identify:: method not supported");
       } // https://developers.google.com/gtagjs/reference/event
 
     }, {
       key: "track",
       value: function track(rudderElement) {
-        logger.debug("in GoogleAdsAnalyticsManager track");
-        var conversionData = this.getConversionData(this.clickEventConversions, rudderElement.message.event);
+        logger.debug("in GoogleAdsAnalyticsManager track"); // Dynamic remarketing disabled
 
-        if (conversionData.conversionLabel) {
-          var conversionLabel = conversionData.conversionLabel;
-          var eventName = conversionData.eventName;
-          var sendToValue = "".concat(this.conversionId, "/").concat(conversionLabel);
-          var properties = {};
+        if (!this.dynamicRemarketing) {
+          var conversionData = this.getConversionData(this.clickEventConversions, rudderElement.message.event);
 
-          if (rudderElement.message.properties) {
-            properties.value = rudderElement.message.properties.revenue;
-            properties.currency = rudderElement.message.properties.currency;
-            properties.transaction_id = rudderElement.message.properties.order_id;
+          if (conversionData.conversionLabel) {
+            var conversionLabel = conversionData.conversionLabel;
+            var eventName = conversionData.eventName;
+            var sendToValue = "".concat(this.conversionId, "/").concat(conversionLabel);
+            var properties = {};
+
+            if (rudderElement.message.properties) {
+              properties.value = rudderElement.message.properties.revenue;
+              properties.currency = rudderElement.message.properties.currency;
+              properties.transaction_id = rudderElement.message.properties.order_id;
+            }
+
+            properties.send_to = sendToValue;
+            properties = removeUndefinedAndNullValues(properties);
+            window.gtag("event", eventName, properties);
+          }
+        } else {
+          var event = rudderElement.message.event;
+
+          if (!event) {
+            logger.error("Event name not present");
+            return;
           }
 
-          properties.send_to = sendToValue;
-          window.gtag("event", eventName, properties);
+          var payload = {};
+          var _sendToValue = this.conversionId;
+
+          if (rudderElement.message.properties) {
+            payload = rudderElement.message.properties;
+          }
+
+          payload.send_to = _sendToValue;
+          window.gtag("event", event, payload);
         }
       }
     }, {
       key: "page",
       value: function page(rudderElement) {
-        logger.debug("in GoogleAdsAnalyticsManager page");
-        var conversionData = this.getConversionData(this.pageLoadConversions, rudderElement.message.name);
+        logger.debug("in GoogleAdsAnalyticsManager page"); // Dynamic re-marketing is disabled
 
-        if (conversionData.conversionLabel) {
-          var conversionLabel = conversionData.conversionLabel;
-          var eventName = conversionData.eventName;
-          window.gtag("event", eventName, {
-            send_to: "".concat(this.conversionId, "/").concat(conversionLabel)
-          });
+        if (!this.dynamicRemarketing) {
+          var conversionData = this.getConversionData(this.pageLoadConversions, rudderElement.message.name);
+
+          if (conversionData.conversionLabel) {
+            var conversionLabel = conversionData.conversionLabel;
+            var eventName = conversionData.eventName;
+            window.gtag("event", eventName, {
+              send_to: "".concat(this.conversionId, "/").concat(conversionLabel)
+            });
+          }
+        } else {
+          var event = rudderElement.message.name;
+
+          if (!event) {
+            logger.error("Event name not present");
+            return;
+          }
+
+          var payload = {};
+          var sendToValue = this.conversionId;
+
+          if (rudderElement.message.properties) {
+            payload = rudderElement.message.properties;
+          }
+
+          payload.send_to = sendToValue;
+          window.gtag("event", event, payload);
         }
       }
     }, {
@@ -29785,7 +29844,10 @@ var rudderanalytics = (function (exports) {
         var properties = message.properties ? Object.keys(message.properties) : null;
         properties.forEach(function (property) {
           var value = message.properties[property];
-          rawPayload[property] = value;
+
+          if (value && _typeof(value) !== "object" && !Array.isArray(value)) {
+            rawPayload[property] = value;
+          }
         });
 
         if (message.event) {
@@ -30456,7 +30518,6 @@ var rudderanalytics = (function (exports) {
     itemObj.ProductURL = item.url;
     itemObj.ImageURL = item.image_url;
     itemObj.ProductCategories = item.categories;
-    itemObj = removeUndefinedAndNullValues(itemObj);
     return itemObj;
   };
 
@@ -30641,7 +30702,7 @@ var rudderanalytics = (function (exports) {
           var event = getValue(message, "event");
           event = event ? event.trim().toLowerCase() : event;
 
-          if (this.ecomEvents.includes(event) && message.properties) {
+          if (this.ecomEvents.includes(event)) {
             var payload = ecommEventPayload(this.eventNameMapping[event], message);
             var eventName = this.eventNameMapping[event];
             var customProperties = {};
@@ -32674,7 +32735,8 @@ var rudderanalytics = (function (exports) {
           capture_pageview: this.capturePageView,
           disable_session_recording: this.disableSessionRecording,
           property_blacklist: this.propertyBlackList,
-          disable_cookie: this.disableCookie
+          disable_cookie: this.disableCookie,
+          persistence: "localStorage+cookie"
         };
 
         if (this.xhrHeaders && Object.keys(this.xhrHeaders).length > 0) {
@@ -33653,6 +33715,10 @@ var rudderanalytics = (function (exports) {
       };
 
       this.page = function () {
+        window._tvq.push([function () {
+          this.deleteCustomVariable(5, "page");
+        }]);
+
         window._tvq.push(["trackPageView"]);
       };
 
@@ -33748,6 +33814,10 @@ var rudderanalytics = (function (exports) {
           }]);
 
           window._tvq.push(["trackPageView"]);
+        } else {
+          window._tvq.push([function () {
+            this.deleteCustomVariable(5, "page");
+          }]);
         }
       }
     }]);
@@ -33913,6 +33983,75 @@ var rudderanalytics = (function (exports) {
     }]);
 
     return VWO;
+  }();
+
+  var GoogleOptimize = /*#__PURE__*/function () {
+    function GoogleOptimize(config) {
+      _classCallCheck(this, GoogleOptimize);
+
+      this.name = "GOOGLE_OPTIMIZE";
+      this.ga = config.ga;
+      this.trackingId = config.trackingId;
+      this.containerId = config.containerId;
+      this.async = config.async;
+      this.aflicker = config.aflicker;
+    }
+
+    _createClass(GoogleOptimize, [{
+      key: "init",
+      value: function init() {
+        logger.debug("===in init Google Optimize===");
+
+        if (!this.containerId) {
+          return;
+        } // load optimize script first
+
+
+        ScriptLoader("Google Optimize", "https://www.googleoptimize.com/optimize.js?id=".concat(this.containerId), this.async);
+
+        if (this.ga) {
+          var gtag = function gtag() {
+            dataLayer.push(arguments);
+          };
+
+          if (!this.trackingId) {
+            return;
+          }
+
+          ScriptLoader("Google Tag Manager", "https://www.googletagmanager.com/gtag/js?id=".concat(this.trackingId));
+          window.dataLayer = window.dataLayer || [];
+          gtag("js", new Date());
+          gtag("config", "".concat(this.trackingId));
+        } // anti flicker snippet contains insertBefore since it needs to be executed before any other script
+        // link -> https://support.google.com/optimize/answer/7100284?hl=en&ref_topic=6197443
+
+
+        if (this.aflicker) {
+          var flick = document.createElement("style");
+          flick.innerHTML = ".async-hide { opacity: 0 !important}";
+          var js = document.createElement("script");
+          js.innerHTML = "(function(a,s,y,n,c,h,i,d,e){s.className+=' '+y;h.start=1*new Date;h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};(a[n]=a[n]||[]).hide=h;setTimeout(function(){i();h.end=null},c);h.timeout=c;})(window,document.documentElement,'async-hide','dataLayer',4000,{'".concat(this.containerId, "':true});");
+          var e = document.getElementsByTagName("script")[0];
+          e.parentNode.insertBefore(flick, e); // style tag in anti flicker snippet should be before the a-flicker script as per docs
+
+          e.parentNode.insertBefore(js, e);
+        }
+      }
+    }, {
+      key: "isLoaded",
+      value: function isLoaded() {
+        logger.debug("=== in isLoaded Google Optimize===");
+        return !!window.dataLayer;
+      }
+    }, {
+      key: "isReady",
+      value: function isReady() {
+        logger.debug("=== in isReady Google Optimize===");
+        return !!window.dataLayer;
+      }
+    }]);
+
+    return GoogleOptimize;
   }();
 
   // This function helps to populate the sale object
@@ -34110,6 +34249,7 @@ var rudderanalytics = (function (exports) {
     SNAP_PIXEL: SnapPixel,
     TVSQUARED: TVSquared,
     VWO: VWO,
+    GOOGLE_OPTIMIZE: GoogleOptimize,
     POST_AFFILIATE_PRO: PostAffiliatePro
   };
 
@@ -34120,7 +34260,7 @@ var rudderanalytics = (function (exports) {
     this.build = "1.0.0";
     this.name = "RudderLabs JavaScript SDK";
     this.namespace = "com.rudderlabs.javascript";
-    this.version = "1.2.9";
+    this.version = "1.2.15";
   };
 
   // Library information class
@@ -34128,7 +34268,7 @@ var rudderanalytics = (function (exports) {
     _classCallCheck(this, RudderLibraryInfo);
 
     this.name = "RudderLabs JavaScript SDK";
-    this.version = "1.2.9";
+    this.version = "1.2.15";
   }; // Operating System information class
 
 
@@ -35397,14 +35537,6 @@ var rudderanalytics = (function (exports) {
 
   var lib$2 = Queue;
 
-  // Payload class, contains batch of Elements
-  var RudderPayload = function RudderPayload() {
-    _classCallCheck(this, RudderPayload);
-
-    this.batch = null;
-    this.writeKey = null;
-  };
-
   var queueOptions = {
     maxRetryDelay: 360000,
     minRetryDelay: 1000,
@@ -35412,34 +35544,21 @@ var rudderanalytics = (function (exports) {
     maxAttempts: 10,
     maxItems: 100
   };
-  var MESSAGE_LENGTH = 32 * 1000; // ~32 Kb
 
-  /**
-   *
-   * @class EventRepository responsible for adding events into
-   * flush queue and sending data to rudder backend
-   * in batch and maintains order of the event.
-   */
+  var XHRQueue = /*#__PURE__*/function () {
+    function XHRQueue() {
+      _classCallCheck(this, XHRQueue);
 
-  var EventRepository = /*#__PURE__*/function () {
-    /**
-     *Creates an instance of EventRepository.
-     * @memberof EventRepository
-     */
-    function EventRepository(options) {
-      _classCallCheck(this, EventRepository);
-
-      this.eventsBuffer = [];
-      this.writeKey = "";
       this.url = "";
-      this.state = "READY";
-      this.batchSize = 0; // previous implementation
-      // setInterval(this.preaparePayloadAndFlush, FLUSH_INTERVAL_DEFAULT, this);
+      this.writeKey = "";
     }
 
-    _createClass(EventRepository, [{
-      key: "startQueue",
-      value: function startQueue(options) {
+    _createClass(XHRQueue, [{
+      key: "init",
+      value: function init(writeKey, url, options) {
+        this.url = url;
+        this.writeKey = writeKey;
+
         if (options) {
           // TODO: add checks for value - has to be +ve?
           _extends(queueOptions, options);
@@ -35448,78 +35567,19 @@ var rudderanalytics = (function (exports) {
         this.payloadQueue = new lib$2("rudder", queueOptions, function (item, done) {
           // apply sentAt at flush time and reset on each retry
           item.message.sentAt = getCurrentTimeFormatted(); // send this item for processing, with a callback to enable queue to get the done status
+          // eslint-disable-next-line no-use-before-define
 
-          eventRepository.processQueueElement(item.url, item.headers, item.message, 10 * 1000, function (err, res) {
+          this.processQueueElement(item.url, item.headers, item.message, 10 * 1000, // eslint-disable-next-line consistent-return
+          function (err, res) {
             if (err) {
               return done(err);
             }
 
             done(null, res);
           });
-        }); // start queue
+        }.bind(this)); // start queue
 
         this.payloadQueue.start();
-      }
-      /**
-       *
-       *
-       * @param {EventRepository} repo
-       * @returns
-       * @memberof EventRepository
-       */
-
-    }, {
-      key: "preaparePayloadAndFlush",
-      value: function preaparePayloadAndFlush(repo) {
-        // construct payload
-        logger.debug("==== in preaparePayloadAndFlush with state: ".concat(repo.state));
-        logger.debug(repo.eventsBuffer);
-
-        if (repo.eventsBuffer.length == 0 || repo.state === "PROCESSING") {
-          return;
-        }
-
-        var eventsPayload = repo.eventsBuffer;
-        var payload = new RudderPayload();
-        payload.batch = eventsPayload;
-        payload.writeKey = repo.writeKey;
-        payload.sentAt = getCurrentTimeFormatted(); // add sentAt to individual events as well
-
-        payload.batch.forEach(function (event) {
-          event.sentAt = payload.sentAt;
-        });
-        repo.batchSize = repo.eventsBuffer.length; // server-side integration, XHR is node module
-
-        if (true) {
-          var xhr = new XMLHttpRequest();
-        } else {
-          var xhr;
-        }
-
-        logger.debug("==== in flush sending to Rudder BE ====");
-        logger.debug(JSON.stringify(payload, replacer));
-        xhr.open("POST", repo.url, true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-
-        {
-          xhr.setRequestHeader("Authorization", "Basic ".concat(btoa("".concat(payload.writeKey, ":"))));
-        } // register call back to reset event buffer on successfull POST
-
-
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4 && xhr.status === 200) {
-            logger.debug("====== request processed successfully: ".concat(xhr.status));
-            repo.eventsBuffer = repo.eventsBuffer.slice(repo.batchSize);
-            logger.debug(repo.eventsBuffer.length);
-          } else if (xhr.readyState === 4 && xhr.status !== 200) {
-            handleError(new Error("request failed with status: ".concat(xhr.status, " for url: ").concat(repo.url)));
-          }
-
-          repo.state = "READY";
-        };
-
-        xhr.send(JSON.stringify(payload, replacer));
-        repo.state = "PROCESSING";
       }
       /**
        * the queue item proceesor
@@ -35562,6 +35622,216 @@ var rudderanalytics = (function (exports) {
           queueFn(error);
         }
       }
+    }, {
+      key: "enqueue",
+      value: function enqueue(message, type) {
+        var headers = {
+          "Content-Type": "application/json",
+          Authorization: "Basic ".concat(btoa("".concat(this.writeKey, ":"))),
+          AnonymousId: btoa(message.anonymousId)
+        }; // add items to the queue
+
+        this.payloadQueue.addItem({
+          url: "".concat(this.url, "/v1/").concat(type),
+          headers: headers,
+          message: message
+        });
+      }
+    }]);
+
+    return XHRQueue;
+  }();
+
+  var defaults$3 = {
+    queue: "queue",
+    maxPayloadSize: 64 * 1000
+  };
+
+  var BeaconQueue = /*#__PURE__*/function () {
+    function BeaconQueue() {
+      _classCallCheck(this, BeaconQueue);
+
+      this.storage = Store;
+      this.maxItems = 10;
+      this.flushQueueTimeOut = undefined;
+      this.timeOutActive = false;
+      this.flushQueueTimeOutInterval = 1000 * 60 * 10; // 10 mins
+
+      this.url = "";
+      this.writekey = "";
+      this.queueName = "".concat(defaults$3.queue, ".").concat(Date.now());
+    }
+
+    _createClass(BeaconQueue, [{
+      key: "sendQueueDataForBeacon",
+      value: function sendQueueDataForBeacon() {
+        this.sendDataFromQueueAndDestroyQueue();
+      }
+    }, {
+      key: "init",
+      value: function init(writekey, url, options) {
+        this.url = url;
+        this.writekey = writekey;
+        if (options.maxItems) this.maxItems = options.maxItems;
+        if (options.flushQueueInterval) this.flushQueueTimeOutInterval = options.flushQueueInterval;
+        var sendQueueData = this.sendQueueDataForBeacon.bind(this);
+        window.addEventListener("unload", sendQueueData);
+      }
+    }, {
+      key: "getQueue",
+      value: function getQueue() {
+        return this.storage.get(this.queueName);
+      }
+    }, {
+      key: "setQueue",
+      value: function setQueue(value) {
+        this.storage.set(this.queueName, value);
+      }
+      /**
+       *
+       * Utility method for excluding null and empty values in JSON
+       * @param {*} _key
+       * @param {*} value
+       * @returns
+       */
+
+    }, {
+      key: "replacer",
+      value: function replacer(_key, value) {
+        if (value === null || value === undefined) {
+          return undefined;
+        }
+
+        return value;
+      }
+    }, {
+      key: "enqueue",
+      value: function enqueue(message) {
+        var queue = this.getQueue() || [];
+        queue = queue.slice(-(this.maxItems - 1));
+        queue.push(message);
+        var batch = queue.slice(0);
+        var data = {
+          batch: batch
+        };
+        var dataToSend = JSON.stringify(data, this.replacer);
+
+        if (dataToSend.length > defaults$3.maxPayloadSize) {
+          batch = queue.slice(0, queue.length - 1);
+          this.flushQueue(batch);
+          queue = this.getQueue();
+          queue.push(message);
+        }
+
+        this.setQueue(queue);
+        this.setTimer();
+
+        if (queue.length === this.maxItems) {
+          this.flushQueue(batch);
+        }
+      }
+    }, {
+      key: "sendDataFromQueueAndDestroyQueue",
+      value: function sendDataFromQueueAndDestroyQueue() {
+        this.sendDataFromQueue();
+        this.storage.remove(this.queueName);
+      }
+    }, {
+      key: "sendDataFromQueue",
+      value: function sendDataFromQueue() {
+        var queue = this.getQueue();
+
+        if (queue && queue.length > 0) {
+          var batch = queue.slice(0, queue.length);
+          this.flushQueue(batch);
+        }
+      }
+    }, {
+      key: "flushQueue",
+      value: function flushQueue(batch) {
+        batch.map(function (event) {
+          event.sentAt = new Date().toISOString();
+        });
+        var data = {
+          batch: batch
+        };
+        var payload = JSON.stringify(data, this.replacer);
+        var blob = new Blob([payload], {
+          type: "application/json"
+        });
+        var isPushed = navigator.sendBeacon("".concat(this.url, "?writeKey=").concat(this.writekey), blob);
+
+        if (!isPushed) {
+          logger.debug("Unable to send data");
+        }
+
+        this.setQueue([]);
+        this.clearTimer();
+      }
+    }, {
+      key: "setTimer",
+      value: function setTimer() {
+        if (!this.timeOutActive) {
+          this.flushQueueTimeOut = setTimeout(this.sendDataFromQueue.bind(this), this.flushQueueTimeOutInterval);
+          this.timeOutActive = true;
+        }
+      }
+    }, {
+      key: "clearTimer",
+      value: function clearTimer() {
+        if (this.timeOutActive) {
+          clearTimeout(this.flushQueueTimeOut);
+          this.timeOutActive = false;
+        }
+      }
+    }]);
+
+    return BeaconQueue;
+  }();
+
+  var MESSAGE_LENGTH = 32 * 1000; // ~32 Kb
+
+  /**
+   *
+   * @class EventRepository responsible for adding events into
+   * flush queue and sending data to rudder backend
+   * in batch and maintains order of the event.
+   */
+
+  var EventRepository = /*#__PURE__*/function () {
+    /**
+     *Creates an instance of EventRepository.
+     * @memberof EventRepository
+     */
+    function EventRepository() {
+      _classCallCheck(this, EventRepository);
+
+      this.queue = undefined;
+    }
+
+    _createClass(EventRepository, [{
+      key: "initialize",
+      value: function initialize(writeKey, url, options) {
+        var queueOptions = {};
+        var targetUrl = url.slice(-1) === "/" ? url.slice(0, -1) : url;
+
+        if (options && options.useBeacon) {
+          if (options && options.beaconQueueOptions && options.beaconQueueOptions != null && _typeof(options.beaconQueueOptions) === "object") {
+            queueOptions = options.beaconQueueOptions;
+          }
+
+          targetUrl = "".concat(targetUrl, "/beacon/v1/batch");
+          this.queue = new BeaconQueue();
+        } else {
+          if (options && options.queueOptions && options.queueOptions != null && _typeof(options.queueOptions) === "object") {
+            queueOptions = options.queueOptions;
+          }
+
+          this.queue = new XHRQueue();
+        }
+
+        this.queue.init(writeKey, targetUrl, queueOptions);
+      }
       /**
        *
        *
@@ -35573,34 +35843,22 @@ var rudderanalytics = (function (exports) {
       key: "enqueue",
       value: function enqueue(rudderElement, type) {
         var message = rudderElement.getElementContent();
-        var headers = {
-          "Content-Type": "application/json",
-          Authorization: "Basic ".concat(btoa("".concat(this.writeKey, ":"))),
-          AnonymousId: btoa(message.anonymousId)
-        };
         message.originalTimestamp = getCurrentTimeFormatted();
         message.sentAt = getCurrentTimeFormatted(); // add this, will get modified when actually being sent
         // check message size, if greater log an error
 
         if (JSON.stringify(message).length > MESSAGE_LENGTH) {
           logger.error("[EventRepository] enqueue:: message length greater 32 Kb ", message);
-        } // modify the url for event specific endpoints
+        }
 
-
-        var url = this.url.slice(-1) == "/" ? this.url.slice(0, -1) : this.url; // add items to the queue
-
-        this.payloadQueue.addItem({
-          url: "".concat(url, "/v1/").concat(type),
-          headers: headers,
-          message: message
-        });
+        this.queue.enqueue(message, type);
       }
     }]);
 
     return EventRepository;
   }();
 
-  var eventRepository = new EventRepository();
+  var eventRepository = new EventRepository(); // eslint-disable-next-line import/prefer-default-export
 
   function addDomEventHandlers(rudderanalytics) {
     var handler = function handler(e) {
@@ -36227,6 +36485,131 @@ var rudderanalytics = (function (exports) {
     return Math.floor(Date.now() / 60000);
   }
 
+  /* eslint-disable class-methods-use-this */
+
+  var OneTrust = /*#__PURE__*/function () {
+    function OneTrust(sourceConfig) {
+      var _this = this;
+
+      _classCallCheck(this, OneTrust);
+
+      this.sourceConfig = sourceConfig; // If user does not load onetrust sdk before loading rudderstack sdk
+      // we will not be filtering any of the destinations.
+
+      if (!window.OneTrust || !window.OnetrustActiveGroups) {
+        logger.debug("Onetrust window objects not retrieved. Thus events are sent.");
+        return true;
+      } // OneTrust Cookie Compliance populates a data layer object OnetrustActiveGroups with
+      // the cookie categories that the user has consented to.
+      // Eg: ',C0001,C0003,'
+      // We split it and save it as an array.
+
+
+      var userSetConsentGroupIds = window.OnetrustActiveGroups.split(","); // Ids user has consented
+      // Get information about the cookie script - data includes, consent models, cookies in preference centre, etc.
+      // We get the groups(cookie categorization), user has created in one trust account.
+
+      var oneTrustAllGroupsInfo = window.OneTrust.GetDomainData().Groups;
+      this.userSetConsentGroupNames = []; // Get the names of the cookies consented by the user in the browser.
+
+      oneTrustAllGroupsInfo.forEach(function (group) {
+        var CustomGroupId = group.CustomGroupId,
+            GroupName = group.GroupName;
+
+        if (userSetConsentGroupIds.includes(CustomGroupId)) {
+          _this.userSetConsentGroupNames.push(GroupName.toUpperCase().trim());
+        }
+      });
+    }
+
+    _createClass(OneTrust, [{
+      key: "isEnabled",
+      value: function isEnabled(destConfig) {
+        var _this2 = this;
+
+        try {
+          /**
+          * Structure of onetrust consent group destination config.
+          * 
+          * "oneTrustConsentGroup": [
+                            {
+                                "oneTrustConsentGroup": "Performance Cookies"
+                            },
+                            {
+                                "oneTrustConsentGroup": "Functional Cookies"
+                            },
+                            {
+                                "oneTrustConsentGroup": ""
+                            }
+                        ]
+          *
+          */
+          var oneTrustCookieCategories = destConfig.oneTrustCookieCategories; // mapping of the destination with the consent group name
+          // If the destination do not have this mapping events will be sent.
+
+          if (!oneTrustCookieCategories) {
+            return true;
+          } // Change the structure of oneTrustConsentGroup as an array and filter values if empty string
+          // Eg:
+          // ["Performance Cookies", "Functional Cookies"]
+
+
+          var oneTrustConsentGroupArr = oneTrustCookieCategories.map(function (c) {
+            return c.oneTrustCookieCategory;
+          }).filter(function (n) {
+            return n;
+          });
+          var containsAllConsent = true; // Check if all the destination's mapped cookie categories are consented by the user in the browser.
+
+          containsAllConsent = oneTrustConsentGroupArr.every(function (element) {
+            return _this2.userSetConsentGroupNames.includes(element.toUpperCase().trim());
+          });
+          return containsAllConsent;
+        } catch (e) {
+          logger.error("Error during onetrust cookie consent management ".concat(e));
+          return true;
+        }
+      }
+    }]);
+
+    return OneTrust;
+  }();
+
+  var CookieConsentFactory = /*#__PURE__*/function () {
+    function CookieConsentFactory() {
+      _classCallCheck(this, CookieConsentFactory);
+    }
+
+    _createClass(CookieConsentFactory, null, [{
+      key: "initialize",
+      value: function initialize(sourceConfig, cookieConsentOptions) {
+        var _cookieConsentOptions;
+
+        /**
+         *
+         * check which type of cookie consent manager needs to be called if enabled
+         * for now we have only OneTrust.
+         * But if new cookie consent manager options are implemented,
+         * we need to make sure only one of them is enabled by the user in the
+         * load options
+         *
+         */
+        if (cookieConsentOptions !== null && cookieConsentOptions !== void 0 && (_cookieConsentOptions = cookieConsentOptions.oneTrust) !== null && _cookieConsentOptions !== void 0 && _cookieConsentOptions.enabled) {
+          // This is P1. When we have an ui in source side to turn on/off of cookie consent
+          // if (sourceConfig &&
+          //     sourceConfig.cookieConsentManager &&
+          // sourceConfig.cookieConsentManager.oneTrust &&
+          // sourceConfig.cookieConsentManager.oneTrustenabled) {
+          return new OneTrust(); // }
+        }
+
+        return null;
+      }
+    }]);
+
+    return CookieConsentFactory;
+  }();
+
   var queryDefaults = {
     trait: "ajs_trait_",
     prop: "ajs_prop_"
@@ -36286,6 +36669,7 @@ var rudderanalytics = (function (exports) {
       };
       this.loaded = false;
       this.loadIntegration = true;
+      this.cookieConsentOptions = {};
     }
     /**
      * initialize the user after load config
@@ -36357,10 +36741,20 @@ var rudderanalytics = (function (exports) {
           }, this);
           logger.debug("this.clientIntegrations: ", this.clientIntegrations); // intersection of config-plane native sdk destinations with sdk load time destination list
 
-          this.clientIntegrations = findAllEnabledDestinations(this.loadOnlyIntegrations, this.clientIntegrations); // remove from the list which don't have support yet in SDK
+          this.clientIntegrations = findAllEnabledDestinations(this.loadOnlyIntegrations, this.clientIntegrations);
+          var cookieConsent = undefined; // Check if cookie consent manager is being set through load options
+
+          if (Object.keys(this.cookieConsentOptions).length) {
+            // Call the cookie consent factory to initialise and return the type of cookie
+            // consent being set. For now we only support OneTrust.
+            cookieConsent = CookieConsentFactory.initialize(response, this.cookieConsentOptions);
+          } // If cookie consent object is return we filter according to consents given by user
+          // else we do not consider any filtering for cookie consent.
+
 
           this.clientIntegrations = this.clientIntegrations.filter(function (intg) {
-            return integrations[intg.name] != undefined;
+            return integrations[intg.name] != undefined && (!cookieConsent || // check if cookieconsent object is present and then do filtering
+            cookieConsent && cookieConsent.isEnabled(intg.config));
           });
           this.init(this.clientIntegrations);
         } catch (error) {
@@ -37024,6 +37418,7 @@ var rudderanalytics = (function (exports) {
         var _this3 = this;
 
         logger.debug("inside load ");
+        if (options && options.cookieConsentManager) this.cookieConsentOptions = lodash_clonedeep(options.cookieConsentManager);
         if (this.loaded) return;
         var configUrl = CONFIG_URL;
 
@@ -37034,15 +37429,25 @@ var rudderanalytics = (function (exports) {
           throw Error("failed to initialize");
         }
 
+        var storageOptions = {};
+
         if (options && options.logLevel) {
           logger.setLogLevel(options.logLevel);
         }
 
         if (options && options.setCookieDomain) {
-          this.storage.options({
+          storageOptions = _objectSpread2(_objectSpread2({}, storageOptions), {}, {
             domain: options.setCookieDomain
           });
         }
+
+        if (options && options.secureCookie) {
+          storageOptions = _objectSpread2(_objectSpread2({}, storageOptions), {}, {
+            secure: options.secureCookie
+          });
+        }
+
+        this.storage.options(storageOptions);
 
         if (options && options.integrations) {
           _extends(this.loadOnlyIntegrations, options.integrations);
@@ -37080,22 +37485,11 @@ var rudderanalytics = (function (exports) {
           this.registerCallbacks(true);
         }
 
-        if (options && options.queueOptions && options.queueOptions != null && _typeof(options.queueOptions) == "object") {
-          this.eventRepository.startQueue(options.queueOptions);
-        } else {
-          this.eventRepository.startQueue({});
-        }
-
         if (options && options.loadIntegration != undefined) {
           this.loadIntegration = !!options.loadIntegration;
         }
 
-        this.eventRepository.writeKey = writeKey;
-
-        if (serverUrl) {
-          this.eventRepository.url = serverUrl;
-        }
-
+        this.eventRepository.initialize(writeKey, serverUrl, options);
         this.initializeUser();
         this.setInitialPageProperties();
         this.loaded = true;
