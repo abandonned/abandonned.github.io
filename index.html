@@ -36,42 +36,42 @@
     );
 
     // posthog test
-    rudderanalytics.page();
-      rudderanalytics.identify(
-        "user123456",
-        { email: "user@email.com", age: 22 },
-        {
-          integrations: {
-            Posthog: {
-              unsetProperties: ["identifysuperprop1", "identifysuperprop2"],
-            },
-          },
-        }
-      );
-      rudderanalytics.track("track without property");
-      rudderanalytics.track(
-        "track with property",
-        { validProp: "valid property", blackproperty: "not valid" },
-        {
-          integrations: {
-            Posthog: {
-              superProperties: { superprop1: "value1", superprop2: "value2" },
-              setOnceProperties: { onceprop: "value2" },
-            },
-          },
-        }
-      );
-      rudderanalytics.track(
-        "track with property2",
-        { validProp: "valid property", blackproperty: "not valid" },
-        {
-          integrations: {
-            Posthog: {
-              unsetProperties: ["identifysuperprop1", "identifysuperprop2"],
-            },
-          },
-        }
-      );
+    // rudderanalytics.page();
+    //   rudderanalytics.identify(
+    //     "user123456",
+    //     { email: "user@email.com", age: 22 },
+    //     {
+    //       integrations: {
+    //         Posthog: {
+    //           unsetProperties: ["identifysuperprop1", "identifysuperprop2"],
+    //         },
+    //       },
+    //     }
+    //   );
+    //   rudderanalytics.track("track without property");
+    //   rudderanalytics.track(
+    //     "track with property",
+    //     { validProp: "valid property", blackproperty: "not valid" },
+    //     {
+    //       integrations: {
+    //         Posthog: {
+    //           superProperties: { superprop1: "value1", superprop2: "value2" },
+    //           setOnceProperties: { onceprop: "value2" },
+    //         },
+    //       },
+    //     }
+    //   );
+    //   rudderanalytics.track(
+    //     "track with property2",
+    //     { validProp: "valid property", blackproperty: "not valid" },
+    //     {
+    //       integrations: {
+    //         Posthog: {
+    //           unsetProperties: ["identifysuperprop1", "identifysuperprop2"],
+    //         },
+    //       },
+    //     }
+    //   );
     
     // rudderanalytics.identify("testuserid3", {
     //   firstName: "Test",
@@ -254,4 +254,5 @@ h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};
         _learnq.push(['track', 'Started Checkout', {
         }]);
       </script> -->
+    <head></head>
 </html>
