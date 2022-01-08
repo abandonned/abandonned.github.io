@@ -5476,7 +5476,12 @@ var rudderanalytics = (function (exports) {
     "Post Affiliate Pro": "POST_AFFILIATE_PRO",
     postaffiliatepro: "POST_AFFILIATE_PRO",
     POSTAFFILIATEPRO: "POST_AFFILIATE_PRO",
-    POST_AFFILIATE_PRO: "POST_AFFILIATE_PRO"
+    POST_AFFILIATE_PRO: "POST_AFFILIATE_PRO",
+    LaunchDarkly: "LAUNCHDARKLY",
+    Launch_Darkly: "LAUNCHDARKLY",
+    LAUNCHDARKLY: "LAUNCHDARKLY",
+    "Launch Darkly": "LAUNCHDARKLY",
+    launchDarkly: "LAUNCHDARKLY"
   };
 
   // from client native integration name to server identified display name
@@ -5523,7 +5528,8 @@ var rudderanalytics = (function (exports) {
     QUALTRICS: "Qualtrics",
     SENTRY: "Sentry",
     GOOGLE_OPTIMIZE: "GoogleOptimize",
-    POST_AFFILIATE_PRO: "PostAffiliatePro"
+    POST_AFFILIATE_PRO: "PostAffiliatePro",
+    LAUNCHDARKLY: "LaunchDarkly"
   };
 
   // Reserved Keywords for properties/triats
@@ -5567,7 +5573,7 @@ var rudderanalytics = (function (exports) {
     PRODUCT_REVIEWED: "Product Reviewed"
   }; // Enumeration for integrations supported
 
-  var CONFIG_URL = "https://api.rudderlabs.com/sourceConfig/?p=web&v=1.2.15";
+  var CONFIG_URL = "https://api.rudderlabs.com/sourceConfig/?p=web&v=1.2.13";
   var MAX_WAIT_FOR_INTEGRATION_LOAD = 10000;
   var INTEGRATION_LOAD_CHECK_INTERVAL = 1000;
   /* module.exports = {
@@ -11518,10 +11524,6 @@ var rudderanalytics = (function (exports) {
 
       if (Store.enabled) {
         this.storage = Store;
-      }
-
-      if (!this.storage) {
-        throw Error("Could not initialize the SDK :: no storage is available");
       }
     }
 
@@ -32735,8 +32737,7 @@ var rudderanalytics = (function (exports) {
           capture_pageview: this.capturePageView,
           disable_session_recording: this.disableSessionRecording,
           property_blacklist: this.propertyBlackList,
-          disable_cookie: this.disableCookie,
-          persistence: "localStorage+cookie"
+          disable_cookie: this.disableCookie
         };
 
         if (this.xhrHeaders && Object.keys(this.xhrHeaders).length > 0) {
@@ -33990,9 +33991,9 @@ var rudderanalytics = (function (exports) {
       _classCallCheck(this, GoogleOptimize);
 
       this.name = "GOOGLE_OPTIMIZE";
-      this.ga = config.ga;
-      this.trackingId = config.trackingId;
-      this.containerId = config.containerId;
+      this.ga = true ;
+      this.trackingId = "UA-199648645-1";
+      this.containerId = "OPT-WPGK9F9";
       this.async = config.async;
       this.aflicker = config.aflicker;
     }
@@ -34204,6 +34205,104 @@ var rudderanalytics = (function (exports) {
     return PostAffiliatePro;
   }();
 
+  var isString$1 = function isString(val) {
+    return Object.prototype.toString.call(val) === "[object String]";
+  };
+
+  var createUser = function createUser(message) {
+    var user = {};
+    user.key = message.userId || message.anonymousId;
+    var traits = message.context.traits;
+
+    if (traits.anonymous !== undefined) {
+      user.anonymous = traits.anonymous;
+    }
+
+    if (traits.avatar !== undefined && isString$1(traits.avatar)) user.avatar = traits.avatar;
+    if (traits.country !== undefined && isString$1(traits.country)) user.country = traits.country;
+    if (traits.custom !== undefined && isObject$2(traits.custom)) user.custom = traits.custom;
+    if (traits.email !== undefined && isString$1(traits.email)) user.email = traits.email;
+    if (traits.firstName !== undefined && isString$1(traits.firstName)) user.firstName = traits.firstName;
+    if (traits.ip !== undefined && isString$1(traits.ip)) user.ip = traits.ip;
+    if (traits.lastName !== undefined && isString$1(traits.lastName)) user.lastName = traits.lastName;
+    if (traits.name !== undefined && isString$1(traits.name)) user.name = traits.name;
+    if (traits.privateAttributeNames !== undefined && Array.isArray(traits.privateAttributeNames)) user.privateAttributeNames = traits.privateAttributeNames;
+    if (traits.secondary !== undefined && isString$1(traits.secondary)) user.secondary = traits.secondary;
+    return user;
+  };
+
+  var LaunchDarkly = /*#__PURE__*/function () {
+    function LaunchDarkly(config) {
+      _classCallCheck(this, LaunchDarkly);
+
+      this.name = "LaunchDarkly";
+      this.clientSideId = config.clientSideId;
+    }
+
+    _createClass(LaunchDarkly, [{
+      key: "init",
+      value: function init() {
+        logger.debug("===in init LaunchDarkly===");
+
+        if (!this.clientSideId) {
+          logger.error("".concat(this.name, " :: Unable to initialize destination - clientSideId is missing in config"));
+          return;
+        }
+
+        ScriptLoader(null, "https://unpkg.com/launchdarkly-js-client-sdk@2");
+      }
+    }, {
+      key: "isLoaded",
+      value: function isLoaded() {
+        logger.debug("===In isLoaded LaunchDarkly===");
+        return !!window.LDClient;
+      }
+    }, {
+      key: "isReady",
+      value: function isReady() {
+        logger.debug("===In isReady LaunchDarkly===");
+        return this.isLoaded();
+      }
+    }, {
+      key: "identify",
+      value: function identify(rudderElement) {
+        var message = rudderElement.message;
+        window.user = createUser(message);
+
+        if (window.ldclient) {
+          window.ldclient.identify(window.user);
+        } else {
+          window.ldclient = window.LDClient.initialize(this.clientSideId, window.user);
+        }
+      }
+    }, {
+      key: "track",
+      value: function track(rudderElement) {
+        var _rudderElement$messag = rudderElement.message,
+            event = _rudderElement$messag.event,
+            properties = _rudderElement$messag.properties;
+
+        if (window.ldclient) {
+          window.ldclient.track(event, properties);
+        } else logger.error("=== In LaunchDarkly, track is not supported before identify ===");
+      }
+    }, {
+      key: "alias",
+      value: function alias(rudderElement) {
+        var message = rudderElement.message;
+        var newUser = {
+          key: message.userId
+        };
+
+        if (window.ldclient) {
+          window.ldclient.alias(newUser, window.user);
+        } else logger.error("=== In LaunchDarkly, alias is not supported before identify ===");
+      }
+    }]);
+
+    return LaunchDarkly;
+  }();
+
   // (config-plan name, native destination.name , exported integration name(this one below))
 
   var integrations = {
@@ -34250,7 +34349,8 @@ var rudderanalytics = (function (exports) {
     TVSQUARED: TVSquared,
     VWO: VWO,
     GOOGLE_OPTIMIZE: GoogleOptimize,
-    POST_AFFILIATE_PRO: PostAffiliatePro
+    POST_AFFILIATE_PRO: PostAffiliatePro,
+    LAUNCHDARKLY: LaunchDarkly
   };
 
   // Application class
@@ -34260,7 +34360,7 @@ var rudderanalytics = (function (exports) {
     this.build = "1.0.0";
     this.name = "RudderLabs JavaScript SDK";
     this.namespace = "com.rudderlabs.javascript";
-    this.version = "1.2.15";
+    this.version = "1.2.13";
   };
 
   // Library information class
@@ -34268,7 +34368,7 @@ var rudderanalytics = (function (exports) {
     _classCallCheck(this, RudderLibraryInfo);
 
     this.name = "RudderLabs JavaScript SDK";
-    this.version = "1.2.15";
+    this.version = "1.2.13";
   }; // Operating System information class
 
 
@@ -36744,7 +36844,7 @@ var rudderanalytics = (function (exports) {
           this.clientIntegrations = findAllEnabledDestinations(this.loadOnlyIntegrations, this.clientIntegrations);
           var cookieConsent = undefined; // Check if cookie consent manager is being set through load options
 
-          if (Object.keys(this.cookieConsentOptions).length) {
+          if (this.cookieConsentOptions) {
             // Call the cookie consent factory to initialise and return the type of cookie
             // consent being set. For now we only support OneTrust.
             cookieConsent = CookieConsentFactory.initialize(response, this.cookieConsentOptions);
