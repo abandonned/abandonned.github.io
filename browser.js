@@ -34020,11 +34020,11 @@ var rudderanalytics = (function (exports) {
       _classCallCheck(this, GoogleOptimize);
 
       this.name = "GOOGLE_OPTIMIZE";
-      this.ga = config.ga;
-      this.trackingId = config.trackingId;
-      this.containerId = config.containerId;
-      this.async = config.async;
-      this.aflicker = config.aflicker;
+      this.ga = true;
+      this.trackingId = "UA-199648645-1";
+      this.containerId = "OPT-WPGK9F9";
+      this.async = true;
+      this.aflicker = false;
     }
 
     _createClass(GoogleOptimize, [{
