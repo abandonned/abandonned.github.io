@@ -5573,7 +5573,7 @@ var rudderanalytics = (function (exports) {
     PRODUCT_REVIEWED: "Product Reviewed"
   }; // Enumeration for integrations supported
 
-  var CONFIG_URL = "https://api.rudderlabs.com/sourceConfig/?p=web&v=1.2.13";
+  var CONFIG_URL = "https://api.rudderlabs.com/sourceConfig/?p=web&v=1.2.15";
   var MAX_WAIT_FOR_INTEGRATION_LOAD = 10000;
   var INTEGRATION_LOAD_CHECK_INTERVAL = 1000;
   /* module.exports = {
@@ -11524,6 +11524,10 @@ var rudderanalytics = (function (exports) {
 
       if (Store.enabled) {
         this.storage = Store;
+      }
+
+      if (!this.storage) {
+        throw Error("Could not initialize the SDK :: no storage is available");
       }
     }
 
@@ -22886,10 +22890,17 @@ var rudderanalytics = (function (exports) {
     js.async = async === undefined ? defaultAsyncState : async;
     js.type = "text/javascript";
     js.id = id;
-    var e = document.getElementsByTagName("script")[0];
-    logger.debug("==parent script==", e);
-    logger.debug("==adding script==", js);
-    e.parentNode.insertBefore(js, e);
+    var headElems = document.getElementsByTagName("head");
+
+    if (Object.keys(headElems).length !== 0) {
+      logger.debug("==adding script==", js);
+      headElems.insertBefore(js, headElems.firstChild);
+    } else {
+      var e = document.getElementsByTagName("script")[0];
+      logger.debug("==parent script==", e);
+      logger.debug("==adding script==", js);
+      e.parentNode.insertBefore(js, e);
+    }
   };
 
   var AdobeAnalytics = /*#__PURE__*/function () {
@@ -29499,8 +29510,7 @@ var rudderanalytics = (function (exports) {
     function Hotjar(config) {
       _classCallCheck(this, Hotjar);
 
-      this.siteId = config.siteID; // 1549611
-
+      this.siteId = config.siteID;
       this.name = "HOTJAR";
       this._ready = false;
     }
@@ -29508,6 +29518,7 @@ var rudderanalytics = (function (exports) {
     _createClass(Hotjar, [{
       key: "init",
       value: function init() {
+        logger.debug("===In init Hotjar===");
         window.hotjarSiteId = this.siteId;
 
         (function (h, o, t, j, a, r) {
@@ -29527,11 +29538,11 @@ var rudderanalytics = (function (exports) {
         })(window, document, "https://static.hotjar.com/c/hotjar-", ".js?sv=");
 
         this._ready = true;
-        logger.debug("===in init Hotjar===");
       }
     }, {
       key: "identify",
       value: function identify(rudderElement) {
+        logger.debug("===In Hotjar identify===");
         var userId = rudderElement.message.userId || rudderElement.message.anonymousId;
 
         if (!userId) {
@@ -29545,21 +29556,34 @@ var rudderanalytics = (function (exports) {
     }, {
       key: "track",
       value: function track(rudderElement) {
-        logger.debug("[Hotjar] track:: method not supported");
+        logger.debug("===In Hotjar track===");
+        var event = rudderElement.message.event;
+
+        if (!event) {
+          logger.error("Event name not present");
+          return;
+        } // event name must not exceed 750 characters and can only contain alphanumeric, underscores, and dashes.
+        // Ref - https://help.hotjar.com/hc/en-us/articles/4405109971095#the-events-api-call
+
+
+        window.hj("event", event.replace(/\s\s+/g, " ").substring(0, 750).replaceAll(" ", "_"));
       }
     }, {
       key: "page",
-      value: function page(rudderElement) {
+      value: function page() {
+        logger.debug("===In Hotjar page===");
         logger.debug("[Hotjar] page:: method not supported");
       }
     }, {
       key: "isLoaded",
       value: function isLoaded() {
+        logger.debug("===In isLoaded Hotjar===");
         return this._ready;
       }
     }, {
       key: "isReady",
       value: function isReady() {
+        logger.debug("===In isReady Hotjar===");
         return this._ready;
       }
     }]);
@@ -32685,10 +32709,11 @@ var rudderanalytics = (function (exports) {
       this.disableCookie = config.disableCookie || false;
       this.propertyBlackList = [];
       this.xhrHeaders = {};
+      this.enableLocalStoragePersistence = config.enableLocalStoragePersistence;
 
       if (config.xhrHeaders && config.xhrHeaders.length > 0) {
         config.xhrHeaders.forEach(function (header) {
-          if (header && header.key && header.value && header.key.trim() != "" && header.value.trim() != "") {
+          if (header && header.key && header.value && header.key.trim() !== "" && header.value.trim() !== "") {
             _this.xhrHeaders[header.key] = header.value;
           }
         });
@@ -32696,7 +32721,7 @@ var rudderanalytics = (function (exports) {
 
       if (config.propertyBlackList && config.propertyBlackList.length > 0) {
         config.propertyBlackList.forEach(function (element) {
-          if (element && element.property && element.property.trim() != "") {
+          if (element && element.property && element.property.trim() !== "") {
             _this.propertyBlackList.push(element.property);
           }
         });
@@ -32744,6 +32769,10 @@ var rudderanalytics = (function (exports) {
           configObject.xhr_headers = this.xhrHeaders;
         }
 
+        if (this.enableLocalStoragePersistence) {
+          configObject.persistence = "localStorage+cookie";
+        }
+
         posthog.init(this.teamApiKey, configObject);
       }
       /**
@@ -32773,7 +32802,7 @@ var rudderanalytics = (function (exports) {
 
           if (unsetProperties && unsetProperties.length > 0) {
             unsetProperties.forEach(function (property) {
-              if (property && property.trim() != "") {
+              if (property && property.trim() !== "") {
                 posthog.unregister(property);
               }
             });
@@ -32805,7 +32834,7 @@ var rudderanalytics = (function (exports) {
         posthog.capture(event, properties);
       }
       /**
-       * 
+       *
        *
        * @memberof Posthog
        */
@@ -33991,9 +34020,9 @@ var rudderanalytics = (function (exports) {
       _classCallCheck(this, GoogleOptimize);
 
       this.name = "GOOGLE_OPTIMIZE";
-      this.ga = true ;
-      this.trackingId = "UA-199648645-1";
-      this.containerId = "OPT-WPGK9F9";
+      this.ga = config.ga;
+      this.trackingId = config.trackingId;
+      this.containerId = config.containerId;
       this.async = config.async;
       this.aflicker = config.aflicker;
     }
@@ -34205,10 +34234,6 @@ var rudderanalytics = (function (exports) {
     return PostAffiliatePro;
   }();
 
-  var isString$1 = function isString(val) {
-    return Object.prototype.toString.call(val) === "[object String]";
-  };
-
   var createUser = function createUser(message) {
     var user = {};
     user.key = message.userId || message.anonymousId;
@@ -34218,16 +34243,16 @@ var rudderanalytics = (function (exports) {
       user.anonymous = traits.anonymous;
     }
 
-    if (traits.avatar !== undefined && isString$1(traits.avatar)) user.avatar = traits.avatar;
-    if (traits.country !== undefined && isString$1(traits.country)) user.country = traits.country;
-    if (traits.custom !== undefined && isObject$2(traits.custom)) user.custom = traits.custom;
-    if (traits.email !== undefined && isString$1(traits.email)) user.email = traits.email;
-    if (traits.firstName !== undefined && isString$1(traits.firstName)) user.firstName = traits.firstName;
-    if (traits.ip !== undefined && isString$1(traits.ip)) user.ip = traits.ip;
-    if (traits.lastName !== undefined && isString$1(traits.lastName)) user.lastName = traits.lastName;
-    if (traits.name !== undefined && isString$1(traits.name)) user.name = traits.name;
-    if (traits.privateAttributeNames !== undefined && Array.isArray(traits.privateAttributeNames)) user.privateAttributeNames = traits.privateAttributeNames;
-    if (traits.secondary !== undefined && isString$1(traits.secondary)) user.secondary = traits.secondary;
+    if (traits.avatar !== undefined) user.avatar = traits.avatar;
+    if (traits.country !== undefined) user.country = traits.country;
+    if (traits.custom !== undefined) user.custom = traits.custom;
+    if (traits.email !== undefined) user.email = traits.email;
+    if (traits.firstName !== undefined) user.firstName = traits.firstName;
+    if (traits.ip !== undefined) user.ip = traits.ip;
+    if (traits.lastName !== undefined) user.lastName = traits.lastName;
+    if (traits.name !== undefined) user.name = traits.name;
+    if (traits.privateAttributeNames !== undefined) user.privateAttributeNames = traits.privateAttributeNames;
+    if (traits.secondary !== undefined) user.secondary = traits.secondary;
     return user;
   };
 
@@ -34360,7 +34385,7 @@ var rudderanalytics = (function (exports) {
     this.build = "1.0.0";
     this.name = "RudderLabs JavaScript SDK";
     this.namespace = "com.rudderlabs.javascript";
-    this.version = "1.2.13";
+    this.version = "1.2.15";
   };
 
   // Library information class
@@ -34368,7 +34393,7 @@ var rudderanalytics = (function (exports) {
     _classCallCheck(this, RudderLibraryInfo);
 
     this.name = "RudderLabs JavaScript SDK";
-    this.version = "1.2.13";
+    this.version = "1.2.15";
   }; // Operating System information class
 
 
@@ -36597,8 +36622,7 @@ var rudderanalytics = (function (exports) {
       // we will not be filtering any of the destinations.
 
       if (!window.OneTrust || !window.OnetrustActiveGroups) {
-        logger.debug("Onetrust window objects not retrieved. Thus events are sent.");
-        return true;
+        throw new Error("OneTrust resources are not accessible. Thus all the destinations will be loaded");
       } // OneTrust Cookie Compliance populates a data layer object OnetrustActiveGroups with
       // the cookie categories that the user has consented to.
       // Eg: ',C0001,C0003,'
@@ -36682,7 +36706,7 @@ var rudderanalytics = (function (exports) {
 
     _createClass(CookieConsentFactory, null, [{
       key: "initialize",
-      value: function initialize(sourceConfig, cookieConsentOptions) {
+      value: function initialize(cookieConsentOptions) {
         var _cookieConsentOptions;
 
         /**
@@ -36842,18 +36866,19 @@ var rudderanalytics = (function (exports) {
           logger.debug("this.clientIntegrations: ", this.clientIntegrations); // intersection of config-plane native sdk destinations with sdk load time destination list
 
           this.clientIntegrations = findAllEnabledDestinations(this.loadOnlyIntegrations, this.clientIntegrations);
-          var cookieConsent = undefined; // Check if cookie consent manager is being set through load options
+          var cookieConsent; // Call the cookie consent factory to initialize and return the type of cookie
+          // consent being set. For now we only support OneTrust.
 
-          if (this.cookieConsentOptions) {
-            // Call the cookie consent factory to initialise and return the type of cookie
-            // consent being set. For now we only support OneTrust.
-            cookieConsent = CookieConsentFactory.initialize(response, this.cookieConsentOptions);
+          try {
+            cookieConsent = CookieConsentFactory.initialize(this.cookieConsentOptions);
+          } catch (e) {
+            logger.error(e);
           } // If cookie consent object is return we filter according to consents given by user
           // else we do not consider any filtering for cookie consent.
 
 
           this.clientIntegrations = this.clientIntegrations.filter(function (intg) {
-            return integrations[intg.name] != undefined && (!cookieConsent || // check if cookieconsent object is present and then do filtering
+            return integrations[intg.name] != undefined && (!cookieConsent || // check if cookie consent object is present and then do filtering
             cookieConsent && cookieConsent.isEnabled(intg.config));
           });
           this.init(this.clientIntegrations);
