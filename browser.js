@@ -22889,18 +22889,16 @@ var rudderanalytics = (function (exports) {
     js.src = src;
     js.async = async === undefined ? defaultAsyncState : async;
     js.type = "text/javascript";
-    js.id = id;
-    var headElems = document.getElementsByTagName("head");
+    js.id = id; // const headElems = document.getElementsByTagName("head");
+    // if (Object.keys(headElems).length !== 0) {
+    //   logger.debug("==adding script==", js);
+    //   headElems.insertBefore(js, headElems.firstChild);
+    // } else {
 
-    if (Object.keys(headElems).length !== 0) {
-      logger.debug("==adding script==", js);
-      headElems.insertBefore(js, headElems.firstChild);
-    } else {
-      var e = document.getElementsByTagName("script")[0];
-      logger.debug("==parent script==", e);
-      logger.debug("==adding script==", js);
-      e.parentNode.insertBefore(js, e);
-    }
+    var e = document.getElementsByTagName("script")[0];
+    logger.debug("==parent script==", e);
+    logger.debug("==adding script==", js);
+    e.parentNode.insertBefore(js, e); // }
   };
 
   var AdobeAnalytics = /*#__PURE__*/function () {
