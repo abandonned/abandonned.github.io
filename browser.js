@@ -5573,7 +5573,7 @@ var rudderanalytics = (function (exports) {
     PRODUCT_REVIEWED: "Product Reviewed"
   }; // Enumeration for integrations supported
 
-  var CONFIG_URL = "https://api.rudderlabs.com/sourceConfig/?p=web&v=1.2.15";
+  var CONFIG_URL = "https://api.rudderlabs.com/sourceConfig/?p=web&v=1.2.18";
   var MAX_WAIT_FOR_INTEGRATION_LOAD = 10000;
   var INTEGRATION_LOAD_CHECK_INTERVAL = 1000;
   /* module.exports = {
@@ -22890,11 +22890,11 @@ var rudderanalytics = (function (exports) {
     js.async = async === undefined ? defaultAsyncState : async;
     js.type = "text/javascript";
     js.id = id;
-    var headElems = document.getElementsByTagName("head")[0];
+    var headElmColl = document.getElementsByTagName("head");
 
-    if (Object.keys(headElems).length !== 0) {
+    if (headElmColl.length !== 0) {
       logger.debug("==adding script==", js);
-      headElems.insertBefore(js, headElems.firstChild);
+      headElmColl[0].insertBefore(js, headElmColl[0].firstChild);
     } else {
       var e = document.getElementsByTagName("script")[0];
       logger.debug("==parent script==", e);
@@ -27566,12 +27566,13 @@ var rudderanalytics = (function (exports) {
   camelcase.default = default_1;
 
   var Fullstory = /*#__PURE__*/function () {
-    function Fullstory(config) {
+    function Fullstory(config, analytics) {
       _classCallCheck(this, Fullstory);
 
       this.fs_org = config.fs_org;
       this.fs_debug_mode = config.fs_debug_mode;
       this.name = "FULLSTORY";
+      this.analytics = analytics;
     }
 
     _createClass(Fullstory, [{
@@ -27657,6 +27658,85 @@ var rudderanalytics = (function (exports) {
             return g._w[y].apply(this, arguments);
           };
         })(window, document, window._fs_namespace, "script", "user");
+
+        var FULLSTORY = this.analytics.loadOnlyIntegrations.FULLSTORY; // Checking if crossDomainSupport is their or not.
+
+        if ((FULLSTORY === null || FULLSTORY === void 0 ? void 0 : FULLSTORY.crossDomainSupport) === true) {
+          // This function will check if the customer hash is available or not in localStorage
+          window._fs_identity = function () {
+            if (window.localStorage) {
+              var tata_customer_hash = window.localStorage.tata_customer_hash;
+
+              if (tata_customer_hash) {
+                return {
+                  uid: tata_customer_hash,
+                  displayName: tata_customer_hash
+                };
+              }
+            } else {
+              logger.debug("Unable to access locaStorage");
+            }
+
+            return null;
+          };
+
+          (function () {
+            function fs(api) {
+              if (!window._fs_namespace) {
+                console.error('FullStory unavailable, window["_fs_namespace"] must be defined');
+                return undefined;
+              }
+
+              return api ? window[window._fs_namespace][api] : window[window._fs_namespace];
+            }
+
+            function waitUntil(predicateFn, callbackFn, timeout, timeoutFn) {
+              var totalTime = 0;
+              var delay = 64;
+
+              var resultFn = function resultFn() {
+                if (typeof predicateFn === "function" && predicateFn()) {
+                  callbackFn();
+                  return;
+                }
+
+                delay = Math.min(delay * 2, 1024);
+
+                if (totalTime > timeout) {
+                  if (timeoutFn) {
+                    timeoutFn();
+                  }
+                }
+
+                totalTime += delay;
+                setTimeout(resultFn, delay);
+              };
+
+              resultFn();
+            } // Checking if timeout is provided or not.
+
+
+            var timeout = FULLSTORY.timeout || 2000;
+
+            function identify() {
+              if (typeof window._fs_identity === "function") {
+                var userVars = window._fs_identity();
+
+                if (_typeof(userVars) === "object" && typeof userVars.uid === "string") {
+                  fs("setUserVars")(userVars);
+                  fs("restart")();
+                } else {
+                  fs("log")("error", "FS.setUserVars requires an object that contains uid");
+                }
+              } else {
+                fs("log")("error", 'window["_fs_identity"] function not found');
+              }
+            }
+
+            fs("shutdown")();
+            waitUntil(window._fs_identity, identify, timeout, fs("restart"));
+          })();
+        }
       }
     }, {
       key: "page",
@@ -34385,7 +34465,7 @@ var rudderanalytics = (function (exports) {
     this.build = "1.0.0";
     this.name = "RudderLabs JavaScript SDK";
     this.namespace = "com.rudderlabs.javascript";
-    this.version = "1.2.15";
+    this.version = "1.2.18";
   };
 
   // Library information class
@@ -34393,7 +34473,7 @@ var rudderanalytics = (function (exports) {
     _classCallCheck(this, RudderLibraryInfo);
 
     this.name = "RudderLabs JavaScript SDK";
-    this.version = "1.2.15";
+    this.version = "1.2.18";
   }; // Operating System information class
 
 
