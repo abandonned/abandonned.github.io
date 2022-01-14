@@ -22890,7 +22890,7 @@ var rudderanalytics = (function (exports) {
     js.async = async === undefined ? defaultAsyncState : async;
     js.type = "text/javascript";
     js.id = id;
-    var headElmColl = document.getElementsByTagName("script");
+    var headElmColl = document.getElementsByTagName("head");
 
     if (headElmColl.length !== 0) {
       logger.debug("==adding script==", js);
